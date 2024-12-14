@@ -22,3 +22,5 @@ int main() {
 
     return 0;
 }
+
+// remember to transpose matrice before multiplication -- great for performance
