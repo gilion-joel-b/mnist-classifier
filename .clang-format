@@ -2,5 +2,5 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 DerivePointerAlignment: false
 PointerAlignment: Left
-BreakBeforeBraces: Attach
+BreakBeforeBraces: Linux
 
