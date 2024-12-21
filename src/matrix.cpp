@@ -1,9 +1,12 @@
 
+#include <cstddef>
 #include <vector>
 
-class Matrix
-{
-private:
-  std::vector<std::vector<int> > matrix;
-  Matrix (std::vector<std::vector<int> > matrix) { this->matrix = matrix; }
+class Tensor {
+  private:
+    std::vector<std::vector<int>> tensor;
+    Tensor(std::vector<std::vector<int>> tensor) { this->tensor = tensor; }
+
+  public:
+    int shape() { return tensor.size(); }
 };
