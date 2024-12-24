@@ -1,6 +1,9 @@
+#include <fstream>
 #include <vector>
 
 class NeuralNetwork {
+    // remember to transpose matrice before multiplication -- great for
+    // performance
   public:
     NeuralNetwork(int input_size, int hidden_size, int output_size);
     std::vector<float> forward(const std::vector<float>& input);
@@ -16,11 +19,6 @@ class NeuralNetwork {
 };
 
 int main() {
-    std::vector<std::vector<float>> load_mnist_images(
-        const std::string& filepath);
-    std::vector<int> load_mnist_labels(const std::string& filepath);
-
-    return 0;
+    std::ifstream labels("../mnist/train-labels.idx1-ubyte");
+    std::ifstream images("../mnist/train-labels.idx1-ubyte");
 }
-
-// remember to transpose matrice before multiplication -- great for performance
