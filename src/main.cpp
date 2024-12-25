@@ -1,9 +1,12 @@
 #include <fstream>
+#include <ios>
 #include <iostream>
 
 int main() {
-    std::ifstream labels("mnist/train-labels.idx1-ubyte");
-    std::ifstream images("mnist/train-labels.idx1-ubyte");
+    std::ifstream labels("mnist/train-labels.idx1-ubyte",
+                         std::ios_base::binary);
+    std::ifstream images("mnist/train-labels.idx1-ubyte",
+                         std::ios_base::binary);
     std::string line;
 
     if (labels) {
@@ -17,6 +20,7 @@ int main() {
             labels.read(&c, 1);
             std::cout << "Label: " << (int)c << std::endl;
         }
+        std::cout << "Row count: " << rows << std::endl;
     }
 
     return 0;
