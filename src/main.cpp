@@ -24,6 +24,12 @@ std::vector<int> loadLabels(std::string path) {
     return labelValues;
 }
 
+auto loadImages(std::string path) {
+    std::ifstream images(path, std::ios_base::binary);
+    std::vector<std::vector<int>> imageValues;
+
+}
+
 int main() {
     std::ifstream images("mnist/train-labels.idx1-ubyte",
                          std::ios_base::binary);
