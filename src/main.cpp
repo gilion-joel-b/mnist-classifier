@@ -26,7 +26,7 @@ std::vector<int> loadLabels(std::string path) {
 
 auto loadImages(std::string path) {
     std::ifstream images(path, std::ios_base::binary);
-    std::vector<std::vector<int>> imageValues;
+    std::vector<std::vector<int>> imagesValues;
 
     if (images) {
         images.seekg(0, images.end);
@@ -35,18 +35,19 @@ auto loadImages(std::string path) {
 
         int rows = imagesLength - 16;
 
+        // Need to offset by 16 to skip the header and rows x cols
+        //
+        // After offsetting we know that each tensor is 28x28 matrix of pixels
+        //
+        // We actually want to return a list of 28x28 matrices
+        // First we need to iterate the the rows, and collect 28 at a time into
+        // a matrix.
+        //
+        // All values are unsigned bytes, in a list of 784 values ordered by
+        // rows.
+
         for (int i = 16; i < rows; i++) {
-            std::vector<int> image;
-
-            for (int j = 0; j < 28; j++) {
-                char c;
-                images.seekg(i, images.beg);
-                images.read(&c, 1);
-                image.push_back(c);
-            }
-            imageValues.push_back(image);
         }
-
     }
 }
 
