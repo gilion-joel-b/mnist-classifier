@@ -1,38 +1,13 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <vector>
 
-int main() {
-    std::ifstream labels("mnist/train-labels.idx1-ubyte",
-                         std::ios_base::binary);
-    std::ifstream images("mnist/train-labels.idx1-ubyte",
-                         std::ios_base::binary);
-
-    int labelsLength = labels.tellg();
-    int labelValues[labelsLength];
-
-    if (labels) {
-        labels.seekg(0, labels.end);
-
-        int rows = labelsLength - 8;
-        std::cout << "Total count: " << rows << std::endl;
-        for (int i = 8; i < rows; i++) {
-            char c;
-            labels.seekg(i, labels.beg);
-            labels.read(&c, 1);
-            labelValues[i] = c;
-        }
-        std::cout << "Row count: " << rows << std::endl;
-    }
-
-    return 0;
-}
-
-int* loadLabels(std::string path) {
+std::vector<int> loadLabels(std::string path) {
     std::ifstream labels(path, std::ios_base::binary);
+    std::vector<int> labelValues;
 
     int labelsLength = labels.tellg();
-    int labelValues[labelsLength];
 
     if (labels) {
         labels.seekg(0, labels.end);
@@ -42,9 +17,15 @@ int* loadLabels(std::string path) {
             char c;
             labels.seekg(i, labels.beg);
             labels.read(&c, 1);
-            labelValues[i] = c;
+            labelValues.push_back(c);
         }
     }
 
     return labelValues;
+}
+
+int main() {
+    std::ifstream images("mnist/train-labels.idx1-ubyte",
+                         std::ios_base::binary);
+    auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
 }
