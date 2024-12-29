@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <iostream>
@@ -26,40 +27,78 @@ std::vector<int> loadLabels(std::string path) {
     return labelValues;
 }
 
-auto loadImages(std::string path) {
-    std::ifstream images(path, std::ios_base::binary);
-
-    if (!images) {
+std::vector<char> loadLabelsTwo(const std::string& path) {
+    // Open file in binary mode
+    std::ifstream labels(path, std::ios_base::binary);
+    if (!labels) {
         throw std::runtime_error("Could not open file");
     }
 
-    // Need to offset by 16 to skip the header and rows x cols
-    //
-    // After offsetting we know that each tensor is 28x28 matrix of pixels
-    //
-    // We actually want to return a list of 28x28 matrices
-    // First we need to iterate the the rows, and collect 28 at a time into
-    // a matrix.
-    //
-    // All values are unsigned bytes, in a list of 784 values ordered by
-    // rows.
-    //
-    images.seekg(0, images.end);
-    int imagesLength = images.tellg();
-    images.seekg(16, images.beg);
+    // Move to the end of the file to determine the size
+    labels.seekg(0, labels.end);
+    int labelsLength = labels.tellg();
+    labels.seekg(8, labels.beg); // skip the header
 
-    int imageSize = 28 * 28;
-    int numImages = (imagesLength - 16) / imageSize;
+    if (labelsLength <= 0) {
+        throw std::runtime_error("File is empty or invalid");
+    }
 
-    std::vector<std::vector<std::vector<int>>> imagesValues(
-        numImages, std::vector<std::vector<int>>(28, std::vector<int>(28)));
+    // Read the entire file into a buffer
+    std::vector<char> labelValues((labelsLength - 8) / sizeof(char));
+    labels.read(labelValues.data(), labelsLength);
 
-    std::vector<unsigned char> buffer(imageSize * numImages);
-    std::vector<unsigned char> imageBuffer(imageSize);
+    for (auto const& value : labelValues) {
+        std::cout << value << std::endl;
+    }
+
+    return labelValues;
 }
 
+// auto loadImages(std::string path) {
+//     std::ifstream images(path, std::ios_base::binary);
+//
+//     if (!images) {
+//         throw std::runtime_error("Could not open file");
+//     }
+//
+//     // Need to offset by 16 to skip the header and rows x cols
+//     //
+//     // After offsetting we know that each tensor is 28x28 matrix of pixels
+//     //
+//     // We actually want to return a list of 28x28 matrices
+//     // First we need to iterate the the rows, and collect 28 at a time into
+//     // a matrix.
+//     //
+//     // All values are unsigned bytes, in a list of 784 values ordered by
+//     // rows.
+//     //
+//     // We can use a buffer to read all the values at once and then iterate
+//     // through the buffer to create the meatrices.
+//     //
+//     // However this approach is not memory effieicent, to avoid this we can
+//     // initialize empty vectors, and then stream the values per image which
+//     is
+//     // 28x28 = 784 values.
+//     //
+//     // This is much more memory efficient, and better for large datasets
+//
+//     images.seekg(0, images.end);
+//     int imagesLength = images.tellg();
+//     images.seekg(16, images.beg);
+//
+//     int imageSize = 28 * 28;
+//     int numImages = (imagesLength - 16) / imageSize;
+//
+//     std::vector<std::vector<std::vector<int>>> imagesValues(
+//         numImages, std::vector<std::vector<int>>(28, std::vector<int>(28)));
+//
+//     std::vector<unsigned char> buffer(imageSize * numImages);
+//     std::vector<unsigned char> imageBuffer(imageSize);
+// }
+//
 int main() {
     std::ifstream images("mnist/train-labels.idx1-ubyte",
                          std::ios_base::binary);
     auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
+    auto labelsTwo = loadLabelsTwo("mnist/train-labels.idx1-ubyte");
 }
