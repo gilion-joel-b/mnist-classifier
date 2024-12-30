@@ -32,7 +32,6 @@ std::vector<int> loadLabels(std::string path) {
 
     for (char byte : buffer) {
         int value = static_cast<unsigned char>(byte);
-        std::cout << value << std::endl;
         labelValues.push_back(value);
     }
 
