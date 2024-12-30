@@ -61,8 +61,7 @@ std::vector<char> loadLabelsTwo(const std::string& path) {
 //         throw std::runtime_error("Could not open file");
 //     }
 //
-//     // Need to offset by 16 to skip the header and rows x cols
-//     //
+//     // Need to offset by 16 to skip the header and rows x cols //
 //     // After offsetting we know that each tensor is 28x28 matrix of pixels
 //     //
 //     // We actually want to return a list of 28x28 matrices
