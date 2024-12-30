@@ -10,20 +10,16 @@ std::vector<int> loadLabels(const std::string& path) {
         throw std::runtime_error("Could not open file");
     }
 
-    // Seek to the end to determine the file size
     labels.seekg(0, labels.end);
     int labelsLength = labels.tellg();
     if (labelsLength <= 8) {
         throw std::runtime_error("File is too short");
     }
 
-    // Calculate the number of labels
     int rows = labelsLength - 8;
 
-    // Seek to the 8th byte
     labels.seekg(8, labels.beg);
 
-    // Read the data into a buffer
     std::vector<unsigned char> buffer(rows);
     labels.read(reinterpret_cast<char*>(buffer.data()), rows);
 
@@ -50,13 +46,15 @@ int main() {
                          std::ios_base::binary);
     auto t1 = high_resolution_clock::now();
 
-    auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
+    for (int i = 0; i < 10000; ++i) {
+        auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
+    }
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as an integer. */
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
     /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
+    duration<double, std::milli> ms_double = (t2 - t1)/10000;
 
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
