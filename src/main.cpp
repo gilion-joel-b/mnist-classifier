@@ -4,36 +4,6 @@
 #include <stdexcept>
 #include <vector>
 
-// std::vector<int> loadLabels(std::string path) {
-//     std::ifstream labels(path, std::ios_base::binary);
-//     if (!labels) {
-//         throw std::runtime_error("Could not open file");
-//     }
-//
-//     labels.seekg(0, labels.end);
-//     int labelsLength = labels.tellg();
-//
-//     std::vector<int> labelValues;
-//
-//     labels.seekg(8, labels.beg);
-//     int rows = labelsLength - 8;
-//
-//     char buffer[rows];
-//     labels.read(buffer, rows);
-//
-//     if (labels.gcount() != rows) {
-//         throw std::runtime_error("Could not read file");
-//     }
-//
-//     for (char byte : buffer) {
-//         int value = static_cast<unsigned char>(byte);
-//         labelValues.push_back(value);
-//     }
-//
-//     return labelValues;
-// }
-//
-//
 std::vector<int> loadLabels(const std::string& path) {
     std::ifstream labels(path, std::ios_base::binary);
     if (!labels) {
