@@ -48,18 +48,10 @@ int main() {
 
     std::ifstream images("mnist/train-labels.idx1-ubyte",
                          std::ios_base::binary);
-
     auto t1 = high_resolution_clock::now();
+
     auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
     auto t2 = high_resolution_clock::now();
-
-    for (size_t i = 0; i < labels.size(); ++i) {
-        std::cout << static_cast<int>(labels[i]) << " ";
-        if ((i + 1) % 20 == 0) { // Print 20 labels per line
-            std::cout << std::endl;
-        }
-    }
-
     /* Getting number of milliseconds as an integer. */
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
@@ -68,6 +60,8 @@ int main() {
 
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
+
+    return 0;
 }
 
 // auto loadImages(std::string path) {
@@ -77,8 +71,7 @@ int main() {
 //         throw std::runtime_error("Could not open file");
 //     }
 //
-//     // Need to offset by 16 to skip the header and rows x cols
-//     //
+//     // Need to offset by 16 to skip the header and rows x cols //
 //     // After offsetting we know that each tensor is 28x28 matrix of pixels
 //     //
 //     // We actually want to return a list of 28x28 matrices
