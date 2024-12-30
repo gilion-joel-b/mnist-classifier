@@ -83,6 +83,7 @@ std::vector<int> loadLabels(std::string path) {
 int main() {
     std::ifstream images("mnist/train-labels.idx1-ubyte",
                          std::ios_base::binary);
+
     auto t1 = high_resolution_clock::now();
     auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
     auto t2 = high_resolution_clock::now();
