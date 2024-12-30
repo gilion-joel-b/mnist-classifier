@@ -4,11 +4,6 @@
 #include <stdexcept>
 #include <vector>
 
-using std::chrono::duration;
-using std::chrono::duration_cast;
-using std::chrono::high_resolution_clock;
-using std::chrono::milliseconds;
-
 std::vector<int> loadLabels(std::string path) {
     std::ifstream labels(path, std::ios_base::binary);
     if (!labels) {
@@ -23,8 +18,8 @@ std::vector<int> loadLabels(std::string path) {
     labels.seekg(8, labels.beg);
     int rows = labelsLength - 8;
 
-    std::vector<char> buffer(rows);
-    labels.read(buffer.data(), rows);
+    char buffer[rows];
+    labels.read(buffer, rows);
 
     if (labels.gcount() != rows) {
         throw std::runtime_error("Could not read file");
@@ -81,6 +76,11 @@ std::vector<int> loadLabels(std::string path) {
 // }
 //
 int main() {
+    using std::chrono::duration;
+    using std::chrono::duration_cast;
+    using std::chrono::high_resolution_clock;
+    using std::chrono::milliseconds;
+
     std::ifstream images("mnist/train-labels.idx1-ubyte",
                          std::ios_base::binary);
 
