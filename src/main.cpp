@@ -1,9 +1,13 @@
-#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+
+using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::chrono::milliseconds;
 
 std::vector<int> loadLabels(std::string path) {
     std::ifstream labels(path, std::ios_base::binary);
@@ -11,44 +15,25 @@ std::vector<int> loadLabels(std::string path) {
         throw std::runtime_error("Could not open file");
     }
 
+    labels.seekg(0, labels.end);
     int labelsLength = labels.tellg();
+
     std::vector<int> labelValues(labelsLength);
 
-    labels.seekg(0, labels.end);
-
+    labels.seekg(8, labels.beg);
     int rows = labelsLength - 8;
-    for (int i = 8; i < rows; i++) {
-        char c;
-        labels.seekg(i, labels.beg);
-        labels.read(&c, 1);
-        labelValues.push_back(c);
+
+    std::vector<char> buffer(rows);
+    labels.read(buffer.data(), rows);
+
+    if (labels.gcount() != rows) {
+        throw std::runtime_error("Could not read file");
     }
 
-    return labelValues;
-}
-
-std::vector<char> loadLabelsTwo(const std::string& path) {
-    // Open file in binary mode
-    std::ifstream labels(path, std::ios_base::binary);
-    if (!labels) {
-        throw std::runtime_error("Could not open file");
-    }
-
-    // Move to the end of the file to determine the size
-    labels.seekg(0, labels.end);
-    int labelsLength = labels.tellg();
-    labels.seekg(8, labels.beg); // skip the header
-
-    if (labelsLength <= 0) {
-        throw std::runtime_error("File is empty or invalid");
-    }
-
-    // Read the entire file into a buffer
-    std::vector<char> labelValues((labelsLength - 8) / sizeof(char));
-    labels.read(labelValues.data(), labelsLength);
-
-    for (auto const& value : labelValues) {
+    for (char byte : buffer) {
+        int value = static_cast<unsigned char>(byte);
         std::cout << value << std::endl;
+        labelValues.push_back(value);
     }
 
     return labelValues;
@@ -99,6 +84,16 @@ std::vector<char> loadLabelsTwo(const std::string& path) {
 int main() {
     std::ifstream images("mnist/train-labels.idx1-ubyte",
                          std::ios_base::binary);
+    auto t1 = high_resolution_clock::now();
     auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
-    auto labelsTwo = loadLabelsTwo("mnist/train-labels.idx1-ubyte");
+    auto t2 = high_resolution_clock::now();
+
+    /* Getting number of milliseconds as an integer. */
+    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+    /* Getting number of milliseconds as a double. */
+    duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_int.count() << "ms\n";
+    std::cout << ms_double.count() << "ms\n";
 }
