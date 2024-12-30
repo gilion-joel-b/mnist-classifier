@@ -4,30 +4,67 @@
 #include <stdexcept>
 #include <vector>
 
-std::vector<int> loadLabels(std::string path) {
+// std::vector<int> loadLabels(std::string path) {
+//     std::ifstream labels(path, std::ios_base::binary);
+//     if (!labels) {
+//         throw std::runtime_error("Could not open file");
+//     }
+//
+//     labels.seekg(0, labels.end);
+//     int labelsLength = labels.tellg();
+//
+//     std::vector<int> labelValues;
+//
+//     labels.seekg(8, labels.beg);
+//     int rows = labelsLength - 8;
+//
+//     char buffer[rows];
+//     labels.read(buffer, rows);
+//
+//     if (labels.gcount() != rows) {
+//         throw std::runtime_error("Could not read file");
+//     }
+//
+//     for (char byte : buffer) {
+//         int value = static_cast<unsigned char>(byte);
+//         labelValues.push_back(value);
+//     }
+//
+//     return labelValues;
+// }
+//
+//
+std::vector<int> loadLabels(const std::string& path) {
     std::ifstream labels(path, std::ios_base::binary);
     if (!labels) {
         throw std::runtime_error("Could not open file");
     }
 
+    // Seek to the end to determine the file size
     labels.seekg(0, labels.end);
     int labelsLength = labels.tellg();
+    if (labelsLength <= 8) {
+        throw std::runtime_error("File is too short");
+    }
 
-    std::vector<int> labelValues(labelsLength);
-
-    labels.seekg(8, labels.beg);
+    // Calculate the number of labels
     int rows = labelsLength - 8;
 
-    char buffer[rows];
-    labels.read(buffer, rows);
+    // Seek to the 8th byte
+    labels.seekg(8, labels.beg);
+
+    // Read the data into a buffer
+    std::vector<unsigned char> buffer(rows);
+    labels.read(reinterpret_cast<char*>(buffer.data()), rows);
 
     if (labels.gcount() != rows) {
         throw std::runtime_error("Could not read file");
     }
 
-    for (char byte : buffer) {
-        int value = static_cast<unsigned char>(byte);
-        labelValues.push_back(value);
+    // Convert buffer to a vector of int
+    std::vector<int> labelValues(rows);
+    for (int i = 0; i < rows; ++i) {
+        labelValues[i] = static_cast<int>(buffer[i]);
     }
 
     return labelValues;
@@ -45,6 +82,13 @@ int main() {
     auto t1 = high_resolution_clock::now();
     auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
     auto t2 = high_resolution_clock::now();
+
+    for (size_t i = 0; i < labels.size(); ++i) {
+        std::cout << static_cast<int>(labels[i]) << " ";
+        if ((i + 1) % 20 == 0) { // Print 20 labels per line
+            std::cout << std::endl;
+        }
+    }
 
     /* Getting number of milliseconds as an integer. */
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
