@@ -12,20 +12,12 @@ std::vector<int> loadLabels(const std::string& path) {
 
     labels.seekg(0, labels.end);
     int labelsLength = labels.tellg();
-    if (labelsLength <= 8) {
-        throw std::runtime_error("File is too short");
-    }
-
     int rows = labelsLength - 8;
 
     labels.seekg(8, labels.beg);
 
     std::vector<unsigned char> buffer(rows);
     labels.read(reinterpret_cast<char*>(buffer.data()), rows);
-
-    if (labels.gcount() != rows) {
-        throw std::runtime_error("Could not read file");
-    }
 
     // Convert buffer to a vector of int
     std::vector<int> labelValues(rows);
@@ -54,7 +46,7 @@ int main() {
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
     /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = (t2 - t1)/10000;
+    duration<double, std::milli> ms_double = (t2 - t1) / 10000;
 
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
