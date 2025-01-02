@@ -1,4 +1,5 @@
-#include <cstdio>
+#include <cassert>
+#include <chrono>
 #include <fstream>
 #include <functional>
 #include <ios>
@@ -13,13 +14,14 @@ std::vector<int> loadLabelsOne(std::string path) {
         throw std::runtime_error("Could not open file");
     }
 
-    int labelsLength = labels.tellg();
-    std::vector<int> labelValues(labelsLength);
-
     labels.seekg(0, labels.end);
+    int labelsLength = labels.tellg();
+    labels.seekg(0, labels.beg);
+
+    std::vector<int> labelValues;
 
     int rows = labelsLength - 8;
-    for (int i = 8; i < rows; i++) {
+    for (int i = 8; i < labelsLength; i++) {
         char c;
         labels.seekg(i, labels.beg);
         labels.read(&c, 1);
@@ -35,38 +37,65 @@ std::vector<int> loadLabelsTwo(std::string path) {
         throw std::runtime_error("Could not open file");
     }
 
-    int labelsLength = labels.tellg();
-    std::vector<int> labelValues(labelsLength);
-
     labels.seekg(0, labels.end);
-    char buffer[labelsLength];
+    int labelsLength = labels.tellg();
+    labels.seekg(0, labels.beg);
+
+    std::vector<int> labelValues;
 
     int rows = labelsLength - 8;
-    labels.read(buffer, labelsLength - 8);
-    for (int i = 8; i < rows; i++) {
+    char buffer[labelsLength];
+
+    labels.read(buffer, labelsLength);
+
+    for (int i = 8; i < labelsLength; i++) {
         labelValues.push_back(buffer[i]);
     }
 
     return labelValues;
 }
 
-void benchmark(std::string arg,
+std::vector<int> loadLabelsThree(const std::string& path) {
+    std::ifstream labels(path, std::ios_base::binary);
+    if (!labels) {
+        throw std::runtime_error("Could not open file");
+    }
+
+    labels.seekg(0, labels.end);
+    int labelsLength = labels.tellg();
+    int rows = labelsLength - 8;
+
+    labels.seekg(8, labels.beg);
+
+    std::vector<unsigned char> buffer(rows);
+    labels.read(reinterpret_cast<char*>(buffer.data()), rows);
+
+    std::vector<int> labelValues(rows);
+    for (int i = 0; i < rows; ++i) {
+        labelValues[i] = static_cast<int>(buffer[i]);
+    }
+
+    return labelValues;
+}
+
+void benchmark(std::string ref, std::string arg,
                std::function<std::vector<int>(std::string)> f) {
     using std::chrono::duration;
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;
     using std::chrono::milliseconds;
 
+    std::cout << "Benchmarking " << ref << std::endl;
+
     auto t1 = high_resolution_clock::now();
 
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 100; i++) {
         auto labels = f(arg);
     }
-    auto labels = f(arg);
 
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+    auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
 
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
@@ -77,8 +106,27 @@ void benchmark(std::string arg,
 
 int main() {
     auto path = "mnist/train-labels.idx1-ubyte";
-    benchmark(path, &loadLabelsOne);
-    benchmark(path, &loadLabelsTwo);
+    benchmark("one", path, &loadLabelsOne);
+    benchmark("two", path, &loadLabelsTwo);
+    benchmark("three", path, &loadLabelsThree);
+
+    auto l1 = loadLabelsOne(path);
+    auto l2 = loadLabelsTwo(path);
+    auto l3 = loadLabelsThree(path);
+
+    // std::cout << "l1: " << l1.size() << " l2:" << l2.size()
+    //           << " l3:" << l3.size() << std::endl;
+
+    // for (int i = 0; i < l1.size(); i++) {
+    //     std::cout << l1[i] << " " << l2[i] << " " << l3[i] << std::endl;
+    // }
+
+    assert(l1.size() != 0);
+    assert(l2.size() != 0);
+    assert(l3.size() != 0);
+
+    assert(l1 == l2);
+    assert(l2 == l3);
 
     return 0;
 }
