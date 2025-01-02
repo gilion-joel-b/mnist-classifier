@@ -1,11 +1,13 @@
 #include <cstdio>
 #include <fstream>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
-std::vector<int> loadLabels(std::string path) {
+std::vector<int> loadLabelsOne(std::string path) {
     std::ifstream labels(path, std::ios_base::binary);
     if (!labels) {
         throw std::runtime_error("Could not open file");
@@ -27,17 +29,41 @@ std::vector<int> loadLabels(std::string path) {
     return labelValues;
 }
 
-int main() {
+std::vector<int> loadLabelsTwo(std::string path) {
+    std::ifstream labels(path, std::ios_base::binary);
+    if (!labels) {
+        throw std::runtime_error("Could not open file");
+    }
+
+    int labelsLength = labels.tellg();
+    std::vector<int> labelValues(labelsLength);
+
+    labels.seekg(0, labels.end);
+    char buffer[labelsLength];
+
+    int rows = labelsLength - 8;
+    labels.read(buffer, labelsLength - 8);
+    for (int i = 8; i < rows; i++) {
+        labelValues.push_back(buffer[i]);
+    }
+
+    return labelValues;
+}
+
+void benchmark(std::string arg,
+               std::function<std::vector<int>(std::string)> f) {
     using std::chrono::duration;
     using std::chrono::duration_cast;
     using std::chrono::high_resolution_clock;
     using std::chrono::milliseconds;
 
-    std::ifstream images("mnist/train-labels.idx1-ubyte",
-                         std::ios_base::binary);
     auto t1 = high_resolution_clock::now();
 
-    auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
+    for (int i = 0; i < 100000; i++) {
+        auto labels = f(arg);
+    }
+    auto labels = f(arg);
+
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as an integer. */
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
@@ -47,6 +73,12 @@ int main() {
 
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
+}
+
+int main() {
+    auto path = "mnist/train-labels.idx1-ubyte";
+    benchmark(path, &loadLabelsOne);
+    benchmark(path, &loadLabelsTwo);
 
     return 0;
 }
