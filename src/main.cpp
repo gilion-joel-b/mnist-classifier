@@ -1,27 +1,28 @@
-#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
-std::vector<int> loadLabels(std::string path) {
+std::vector<int> loadLabels(const std::string& path) {
     std::ifstream labels(path, std::ios_base::binary);
     if (!labels) {
         throw std::runtime_error("Could not open file");
     }
 
-    int labelsLength = labels.tellg();
-    std::vector<int> labelValues(labelsLength);
-
     labels.seekg(0, labels.end);
-
+    int labelsLength = labels.tellg();
     int rows = labelsLength - 8;
-    for (int i = 8; i < rows; i++) {
-        char c;
-        labels.seekg(i, labels.beg);
-        labels.read(&c, 1);
-        labelValues.push_back(c);
+
+    labels.seekg(8, labels.beg);
+
+    std::vector<unsigned char> buffer(rows);
+    labels.read(reinterpret_cast<char*>(buffer.data()), rows);
+
+    // Convert buffer to a vector of int
+    std::vector<int> labelValues(rows);
+    for (int i = 0; i < rows; ++i) {
+        labelValues[i] = static_cast<int>(buffer[i]);
     }
 
     return labelValues;
@@ -37,13 +38,15 @@ int main() {
                          std::ios_base::binary);
     auto t1 = high_resolution_clock::now();
 
-    auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
+    for (int i = 0; i < 10000; ++i) {
+        auto labels = loadLabels("mnist/train-labels.idx1-ubyte");
+    }
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as an integer. */
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
     /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
+    duration<double, std::milli> ms_double = (t2 - t1) / 10000;
 
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
