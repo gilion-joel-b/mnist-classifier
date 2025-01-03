@@ -18,38 +18,14 @@ std::vector<int> loadLabelsOne(std::string path) {
     int labelsLength = labels.tellg();
     labels.seekg(0, labels.beg);
 
-    std::vector<int> labelValues;
-
-    int rows = labelsLength - 8;
-    for (int i = 8; i < labelsLength; i++) {
-        char c;
-        labels.seekg(i, labels.beg);
-        labels.read(&c, 1);
-        labelValues.push_back(c);
-    }
-
-    return labelValues;
-}
-
-std::vector<int> loadLabelsTwo(std::string path) {
-    std::ifstream labels(path, std::ios_base::binary);
-    if (!labels) {
-        throw std::runtime_error("Could not open file");
-    }
-
-    labels.seekg(0, labels.end);
-    int labelsLength = labels.tellg();
-    labels.seekg(0, labels.beg);
-
-    std::vector<int> labelValues;
-
     int rows = labelsLength - 8;
     char buffer[labelsLength];
+    std::vector<int> labelValues(rows);
 
     labels.read(buffer, labelsLength);
 
     for (int i = 8; i < labelsLength; i++) {
-        labelValues.push_back(buffer[i]);
+        labelValues[i - 8] = buffer[i];
     }
 
     return labelValues;
@@ -107,12 +83,10 @@ void benchmark(std::string ref, std::string arg,
 int main() {
     auto path = "mnist/train-labels.idx1-ubyte";
     benchmark("one", path, &loadLabelsOne);
-    benchmark("two", path, &loadLabelsTwo);
     benchmark("three", path, &loadLabelsThree);
 
     auto l1 = loadLabelsOne(path);
-    auto l2 = loadLabelsTwo(path);
-    auto l3 = loadLabelsThree(path);
+    auto l2 = loadLabelsThree(path);
 
     // std::cout << "l1: " << l1.size() << " l2:" << l2.size()
     //           << " l3:" << l3.size() << std::endl;
@@ -123,10 +97,8 @@ int main() {
 
     assert(l1.size() != 0);
     assert(l2.size() != 0);
-    assert(l3.size() != 0);
 
     assert(l1 == l2);
-    assert(l2 == l3);
 
     return 0;
 }
