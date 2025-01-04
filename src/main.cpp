@@ -8,10 +8,12 @@
 #include <string>
 #include <vector>
 
-std::vector<int> loadLabels(const std::string& path) {
-    std::ifstream labels(path, std::ios_base::binary);
+using namespace std;
+
+vector<int> loadLabels(const string& path) {
+    ifstream labels(path, ios_base::binary);
     if (!labels) {
-        throw std::runtime_error("Could not open file");
+        throw runtime_error("Could not open file");
     }
 
     labels.seekg(0, labels.end);
@@ -20,10 +22,10 @@ std::vector<int> loadLabels(const std::string& path) {
 
     labels.seekg(8, labels.beg);
 
-    std::vector<unsigned char> buffer(rows);
+    vector<unsigned char> buffer(rows);
     labels.read(reinterpret_cast<char*>(buffer.data()), rows);
 
-    std::vector<int> labelValues(rows);
+    vector<int> labelValues(rows);
     for (int i = 0; i < rows; ++i) {
         labelValues[i] = static_cast<int>(buffer[i]);
     }
@@ -31,14 +33,13 @@ std::vector<int> loadLabels(const std::string& path) {
     return labelValues;
 }
 
-void benchmark(std::string ref, std::string arg,
-               std::function<std::vector<int>(std::string)> f) {
-    using std::chrono::duration;
-    using std::chrono::duration_cast;
-    using std::chrono::high_resolution_clock;
-    using std::chrono::milliseconds;
+void benchmark(string ref, string arg, function<vector<int>(string)> f) {
+    using chrono::duration;
+    using chrono::duration_cast;
+    using chrono::high_resolution_clock;
+    using chrono::milliseconds;
 
-    std::cout << "Benchmarking " << ref << std::endl;
+    cout << "Benchmarking " << ref << endl;
 
     auto t1 = high_resolution_clock::now();
 
@@ -48,20 +49,20 @@ void benchmark(std::string ref, std::string arg,
 
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<std::chrono::milliseconds>(t2 - t1);
+    auto ms_int = duration_cast<chrono::milliseconds>(t2 - t1);
 
     /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
+    duration<double, milli> ms_double = t2 - t1;
 
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
+    cout << ms_int.count() << "ms\n";
+    cout << ms_double.count() << "ms\n";
 }
 
-auto loadImages(std::string path) {
-    std::ifstream images(path, std::ios_base::binary);
+auto loadImages(string path) {
+    ifstream images(path, ios_base::binary);
 
     if (!images) {
-        throw std::runtime_error("Could not open file");
+        throw runtime_error("Could not open file");
     }
 
     // Need to offset by 16 to skip the header and rows x cols //
@@ -84,14 +85,15 @@ auto loadImages(std::string path) {
     int imageSize = 28 * 28;
     int numImages = (imagesLength - 16);
 
-    std::vector<unsigned char> buffer(imageSize * numImages);
+    vector<unsigned char> buffer(imageSize * numImages);
     images.read(reinterpret_cast<char*>(buffer.data()), numImages);
 
-    // Then instead of returning a list of 28x28 matrices, we can return a list
+    // Instead of returning a list of 28x28 matrices, we can return a list
     // of all values.
-    // This is because this way we can store it in contiguous memory.
-    // This is important for performance.
-    std::vector<int> imageValues(imageSize);
+    // This is because this way we can store it in contiguous memory which
+    // improves cache locality, which is important for performance.
+    // Also, it allows us to use SIMD instructions to process the data.
+    vector<int> imageValues(imageSize);
     for (int i = 0; i < numImages; i++) {
         imageValues[i] = static_cast<int>(buffer[i]);
     }
@@ -106,9 +108,8 @@ int main() {
     auto images = loadImages(imagesPath);
 
     for (const auto& l : labels) {
-        std::cout << l << std::endl;
+        cout << l << endl;
     }
 
     return 0;
 }
-
