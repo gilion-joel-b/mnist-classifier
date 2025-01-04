@@ -107,6 +107,15 @@ int main() {
     auto labels = loadLabels(labelsPath);
     auto images = loadImages(imagesPath);
 
+    // Theoretically, since we are finding the correlatoin between the pixels of
+    // the image and the label, we need to map 28 * 28 pixels to a label, which
+    // is 784 pixels.
+    //
+    // Since we need to find a correlation between each pixel and the label, we
+    // need two layers which are fully connected.
+    //
+    // The first layer will have 784 neurons, and the second layer will have 10.
+
     for (const auto& l : labels) {
         cout << l << endl;
     }
