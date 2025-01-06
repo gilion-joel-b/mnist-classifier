@@ -113,12 +113,15 @@ int main() {
     //
     // Since we need to find a correlation between each pixel and the label, we
     // need two layers which are fully connected.
-    //
-    // The first layer will have 784 neurons, and the second layer will have 10.
 
-    for (const auto& l : labels) {
-        cout << l << endl;
-    }
+    // -- Model Architecture --
+    // 1. Input Layer: 784 neurons
+    // 2. Hidden Layer: 64 neurons
+    // 3. Output Layer: 10 neurons
+
+    auto inputLayer = std::vector<int>(784);
+    auto hiddenLayer = std::vector<int>(784);
+    auto outputLayer = std::vector<int>(10);
 
     return 0;
 }
