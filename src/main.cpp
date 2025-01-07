@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <fstream>
@@ -99,6 +100,11 @@ auto loadImages(string path) {
     }
 
     return imageValues;
+}
+
+void relu(vector<int>& input) {
+    std::transform(input.begin(), input.end(), input.begin(),
+                   [](int x) { return std::max(0, x); });
 }
 
 int main() {
