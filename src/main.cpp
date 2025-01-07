@@ -126,7 +126,11 @@ int main() {
     // 3. Output Layer: 10 neurons
 
     auto inputLayer = std::vector<int>(784);
+    auto w1 = std::vector<int>(784 * 64);
+
     auto hiddenLayer = std::vector<int>(784);
+    auto w2 = std::vector<int>(64 * 10);
+
     auto outputLayer = std::vector<int>(10);
 
     return 0;
