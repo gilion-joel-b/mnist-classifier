@@ -121,8 +121,8 @@ int main() {
     // need two layers which are fully connected.
 
     // -- Model Architecture --
-    // 1. Input Layer: 784 neurons
-    // 2. Hidden Layer: 64 neurons
+    // 1. Input Layer: 784 neurons, weights: 784 x 64
+    // 2. Hidden Layer: 64 neurons, weights: 64 x 10
     // 3. Output Layer: 10 neurons
 
     auto inputLayer = std::vector<int>(784);
