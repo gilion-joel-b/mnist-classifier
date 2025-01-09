@@ -102,9 +102,23 @@ auto loadImages(string path) {
     return imageValues;
 }
 
+// Activation function that is used to introduce non-linearity in the model.
 void relu(vector<int>& input) {
     std::transform(input.begin(), input.end(), input.begin(),
                    [](int x) { return std::max(0, x); });
+}
+
+// Loss function -- Mean Squared Error (MSE)
+//
+int mse(vector<int>& predicted, vector<int>& actual) {
+    assert(predicted.size() == actual.size());
+
+    int sum = 0;
+    for (int i = 0; i < predicted.size(); i++) {
+        sum += (predicted[i] - actual[i]) * (predicted[i] - actual[i]);
+    }
+
+    return sum / predicted.size();
 }
 
 int main() {
@@ -121,15 +135,17 @@ int main() {
     // need two layers which are fully connected.
 
     // -- Model Architecture --
-    // 1. Input Layer: 784 neurons, weights: 784 x 64
-    // 2. Hidden Layer: 64 neurons, weights: 64 x 10
+    // 1. Input Layer:  784 neurons,    weights: 784 x 64,  biases: 64
+    // 2. Hidden Layer: 64 neurons,     weights: 64 x 10,   biases: 10
     // 3. Output Layer: 10 neurons
 
     auto inputLayer = std::vector<int>(784);
     auto w1 = std::vector<int>(784 * 64);
+    auto b1 = std::vector<int>(64);
 
     auto hiddenLayer = std::vector<int>(784);
     auto w2 = std::vector<int>(64 * 10);
+    auto b2 = std::vector<int>(10);
 
     auto outputLayer = std::vector<int>(10);
 
