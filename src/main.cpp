@@ -49,10 +49,10 @@ void benchmark(string ref, string arg, function<vector<int>(string)> f) {
     }
 
     auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
+    // Getting number of milliseconds as an integer.
     auto ms_int = duration_cast<chrono::milliseconds>(t2 - t1);
 
-    /* Getting number of milliseconds as a double. */
+    // Getting number of milliseconds as a double.
     duration<double, milli> ms_double = t2 - t1;
 
     cout << ms_int.count() << "ms\n";
