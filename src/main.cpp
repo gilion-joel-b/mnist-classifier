@@ -11,29 +11,6 @@
 
 using namespace std;
 
-vector<int> loadLabels(const string& path) {
-    ifstream labels(path, ios_base::binary);
-    if (!labels) {
-        throw runtime_error("Could not open file");
-    }
-
-    labels.seekg(0, labels.end);
-    int labelsLength = labels.tellg();
-    int rows = labelsLength - 8;
-
-    labels.seekg(8, labels.beg);
-
-    vector<unsigned char> buffer(rows);
-    labels.read(reinterpret_cast<char*>(buffer.data()), rows);
-
-    vector<int> labelValues(rows);
-    for (int i = 0; i < rows; ++i) {
-        labelValues[i] = static_cast<int>(buffer[i]);
-    }
-
-    return labelValues;
-}
-
 void benchmark(string ref, string arg, function<vector<int>(string)> f) {
     using chrono::duration;
     using chrono::duration_cast;
@@ -57,6 +34,29 @@ void benchmark(string ref, string arg, function<vector<int>(string)> f) {
 
     cout << ms_int.count() << "ms\n";
     cout << ms_double.count() << "ms\n";
+}
+
+vector<int> loadLabels(const string& path) {
+    ifstream labels(path, ios_base::binary);
+    if (!labels) {
+        throw runtime_error("Could not open file");
+    }
+
+    labels.seekg(0, labels.end);
+    int labelsLength = labels.tellg();
+    int rows = labelsLength - 8;
+
+    labels.seekg(8, labels.beg);
+
+    vector<unsigned char> buffer(rows);
+    labels.read(reinterpret_cast<char*>(buffer.data()), rows);
+
+    vector<int> labelValues(rows);
+    for (int i = 0; i < rows; ++i) {
+        labelValues[i] = static_cast<int>(buffer[i]);
+    }
+
+    return labelValues;
 }
 
 auto loadImages(string path) {
