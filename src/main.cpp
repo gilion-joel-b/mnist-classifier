@@ -5,6 +5,7 @@
 #include <functional>
 #include <ios>
 #include <iostream>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -102,14 +103,23 @@ auto loadImages(string path) {
     return imageValues;
 }
 
+// Activation function that is used to squash the output of the network to a
+// probability distribution.
+void softmax(vector<float>& input) {
+    auto eSum = accumulate(input.begin(), input.end(), 0.0,
+                           [](float a, float b) { return a + exp(b); });
+
+    transform(input.begin(), input.end(), input.begin(),
+              [eSum](float x) { return exp(x) / eSum; });
+}
+
 // Activation function that is used to introduce non-linearity in the model.
-void relu(vector<int>& input) {
+void relu(vector<float>& input) {
     std::transform(input.begin(), input.end(), input.begin(),
                    [](int x) { return std::max(0, x); });
 }
 
 // Loss function -- Mean Squared Error (MSE)
-//
 int mse(vector<int>& predicted, vector<int>& actual) {
     assert(predicted.size() == actual.size());
 
@@ -120,6 +130,35 @@ int mse(vector<int>& predicted, vector<int>& actual) {
 
     return sum / predicted.size();
 }
+
+// Forward pass of the model
+// The forward pass is the process of taking the input data and passing it
+// through the neural network to get the output.
+//
+// First we calculate the dot product of the input and the weights, and add the
+// bias. Then we apply the activation function to the result.
+//
+// We do this for each layer of the network.
+void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+             vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
+             vector<float>& outputLayer) {
+    // 1. Calculate the dot product of the input layer and the weights, and add
+    // the bias.
+    // 2. Apply the activation function to the result (ReLU).
+    // 3. Calculate the dot product of the hidden layer and the weights, and add
+    // the bias
+    // 4. Apply the activation function to the result (Softmax).
+}
+
+// Backward pass of the model
+// In the backward pass, we calculate the gradients of the loss function with
+// respect to the weights and biases of the network.
+//
+// We use these gradients to update the weights and biases of the network using
+// the gradient descent algorithm.
+void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+              vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
+              vector<float>& outputLayer) {}
 
 int main() {
     auto labelsPath = "mnist/train-labels.idx1-ubyte";
@@ -140,14 +179,14 @@ int main() {
     // 3. Output Layer: 10 neurons
 
     auto inputLayer = std::vector<int>(784);
-    auto w1 = std::vector<int>(784 * 64);
-    auto b1 = std::vector<int>(64);
+    auto w1 = std::vector<float>(784 * 64);
+    auto b1 = std::vector<float>(64);
 
-    auto hiddenLayer = std::vector<int>(784);
-    auto w2 = std::vector<int>(64 * 10);
-    auto b2 = std::vector<int>(10);
+    auto hiddenLayer = std::vector<float>(784);
+    auto w2 = std::vector<float>(64 * 10);
+    auto b2 = std::vector<float>(10);
 
-    auto outputLayer = std::vector<int>(10);
+    auto outputLayer = std::vector<float>(10);
 
     return 0;
 }
