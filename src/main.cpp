@@ -131,7 +131,7 @@ int mse(vector<int>& predicted, vector<int>& actual) {
     return sum / predicted.size();
 }
 
-// Forward pass of the model
+// Forward pass
 // The forward pass is the process of taking the input data and passing it
 // through the neural network to get the output.
 //
@@ -148,9 +148,29 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     // 3. Calculate the dot product of the hidden layer and the weights, and add
     // the bias
     // 4. Apply the activation function to the result (Softmax).
+
+    for (int j = 0; j < 64; j++) {
+        float sum = 0;
+        for (int i = 0; i < 784; i++) {
+            sum += inputLayer[i] * w1[i + j * 784];
+        }
+        hiddenLayer[j] = sum + b1[j];
+    }
+
+    relu(hiddenLayer);
+
+    for (int j = 0; j < 10; j++) {
+        float sum = 0;
+        for (int i = 0; i < 64; i++) {
+            sum += hiddenLayer[i] * w2[i + j * 64];
+        }
+        outputLayer[j] = sum + b2[j];
+    }
+
+    softmax(outputLayer);
 }
 
-// Backward pass of the model
+// Backward pass
 // In the backward pass, we calculate the gradients of the loss function with
 // respect to the weights and biases of the network.
 //
@@ -158,7 +178,9 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
 // the gradient descent algorithm.
 void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
               vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-              vector<float>& outputLayer) {}
+              vector<float>& outputLayer) {
+
+}
 
 int main() {
     auto labelsPath = "mnist/train-labels.idx1-ubyte";
