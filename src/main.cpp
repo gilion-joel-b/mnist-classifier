@@ -115,8 +115,8 @@ void softmax(vector<float>& input) {
 
 // Activation function that is used to introduce non-linearity in the model.
 void relu(vector<float>& input) {
-    std::transform(input.begin(), input.end(), input.begin(),
-                   [](int x) { return std::max(0, x); });
+    transform(input.begin(), input.end(), input.begin(),
+                   [](int x) { return max(0, x); });
 }
 
 // Loss function -- Mean Squared Error (MSE)
@@ -200,15 +200,15 @@ int main() {
     // 2. Hidden Layer: 64 neurons,     weights: 64 x 10,   biases: 10
     // 3. Output Layer: 10 neurons
 
-    auto inputLayer = std::vector<int>(784);
-    auto w1 = std::vector<float>(784 * 64);
-    auto b1 = std::vector<float>(64);
+    auto inputLayer = vector<int>(784);
+    auto w1 = vector<float>(784 * 64);
+    auto b1 = vector<float>(64);
 
-    auto hiddenLayer = std::vector<float>(784);
-    auto w2 = std::vector<float>(64 * 10);
-    auto b2 = std::vector<float>(10);
+    auto hiddenLayer = vector<float>(784);
+    auto w2 = vector<float>(64 * 10);
+    auto b2 = vector<float>(10);
 
-    auto outputLayer = std::vector<float>(10);
+    auto outputLayer = vector<float>(10);
 
     return 0;
 }
