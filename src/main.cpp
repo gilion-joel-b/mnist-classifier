@@ -106,26 +106,29 @@ auto loadImages(string path) {
 // Activation function that is used to squash the output of the network to a
 // probability distribution.
 void softmax(vector<float>& input) {
-    auto eSum = accumulate(input.begin(), input.end(), 0.0,
-                           [](float a, float b) { return a + exp(b); });
+    auto sum = accumulate(input.begin(), input.end(), 0.0,
+                          [](float a, float b) { return a + exp(b); });
 
+    auto fraction = 1.0 / sum;
     transform(input.begin(), input.end(), input.begin(),
-              [eSum](float x) { return exp(x) / eSum; });
+              [sum, fraction](float x) { return exp(x) * fraction; });
 }
 
 // Activation function that is used to introduce non-linearity in the model.
 void relu(vector<float>& input) {
     transform(input.begin(), input.end(), input.begin(),
-                   [](int x) { return max(0, x); });
+              [](int x) { return max(0, x); });
 }
 
 // Loss function -- Mean Squared Error (MSE)
-int mse(vector<int>& predicted, vector<int>& actual) {
-    assert(predicted.size() == actual.size());
+// This often leads to poor result as the gradients become very small.
+// Cross-entropy loss is often used instead.
+int mse(vector<float>& predicted, int actual) {
 
     int sum = 0;
     for (int i = 0; i < predicted.size(); i++) {
-        sum += (predicted[i] - actual[i]) * (predicted[i] - actual[i]);
+        float val = predicted[i] * i;
+        sum += (val - actual) * (val - actual);
     }
 
     return sum / predicted.size();
@@ -170,6 +173,10 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
+void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+              vector<float>& hiddenLayer, vector<float>& w2,
+              vector<float>& b2) {}
+
 // Backward pass
 // In the backward pass, we calculate the gradients of the loss function with
 // respect to the weights and biases of the network.
@@ -178,8 +185,22 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
 // the gradient descent algorithm.
 void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
               vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-              vector<float>& outputLayer) {
+              vector<float>& outputLayer, int target) {
+    // 1, Calculate the gradients.
+    // 2. Update the weights and biases of the network using gradient descent
 
+    auto loss = mse(outputLayer, target);
+}
+
+// For feed forward neural networks it's important to initialize the weights as
+// small random numbers.
+// This is because stochastic gradient descent is sensitive to the initial
+// values of the weights.
+void initializeWeights(vector<float>& weights, int size) {
+    auto fraction = 1.0 / RAND_MAX;
+    transform(
+        weights.begin(), weights.end(), weights.begin(),
+        [fraction](float x) { return static_cast<float>(rand()) * fraction; });
 }
 
 int main() {
