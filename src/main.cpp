@@ -123,12 +123,12 @@ void relu(vector<float>& input) {
 // Loss function -- Mean Squared Error (MSE)
 // This often leads to poor result as the gradients become very small.
 // Cross-entropy loss is often used instead.
-int mse(vector<float>& predicted, int actual) {
+int mse(vector<float>& predicted, int target) {
 
     int sum = 0;
     for (int i = 0; i < predicted.size(); i++) {
         float val = predicted[i] * i;
-        sum += (val - actual) * (val - actual);
+        sum += (val - target) * (val - target);
     }
 
     return sum / predicted.size();
@@ -173,9 +173,23 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
-void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
-              vector<float>& hiddenLayer, vector<float>& w2,
-              vector<float>& b2) {}
+void backPropagation(vector<int>& inputLayer, vector<float>& w1,
+                     vector<float>& b1, vector<float>& hiddenLayer,
+                     vector<float>& w2, vector<float>& b2,
+                     vector<float>& outputLayer, int target) {
+    auto loss = mse(outputLayer, target);
+
+    // The output layer is defined by the equation a = softmax(weights *
+    // hiddenLayer + b2) The derivative of this function is easily derived
+    // analytically.
+    //
+    // a = softmax(weights * hiddenLayer + b2) can be seens a a composition of
+    // functions f . g . h, where f(x) = softmax(x), g(x) = x + b2, h(x) =
+    // weights * hiddenLayer.
+    //
+    // This is the chain rule in calculus.
+
+}
 
 // Backward pass
 // In the backward pass, we calculate the gradients of the loss function with
