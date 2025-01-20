@@ -114,11 +114,15 @@ void softmax(vector<float>& input) {
               [sum, fraction](float x) { return exp(x) * fraction; });
 }
 
+void derivativeSoftmax(vector<float>& input) {}
+
 // Activation function that is used to introduce non-linearity in the model.
 void relu(vector<float>& input) {
     transform(input.begin(), input.end(), input.begin(),
               [](int x) { return max(0, x); });
 }
+
+void derivativeRelu(vector<float>& input) {}
 
 // Loss function -- Mean Squared Error (MSE)
 // This often leads to poor result as the gradients become very small.
@@ -187,7 +191,12 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
     // functions f . g . h, where f(x) = softmax(x), g(x) = x + b2, h(x) =
     // weights * hiddenLayer.
     //
-    // This is the chain rule in calculus.
+    // This is the chain rule of calculus.
+    // The derivative of a composition of functions is the product of the
+    // derivatives of the functions.
+    //
+    // a' = f' * g' * h'
+    //
 
 }
 
