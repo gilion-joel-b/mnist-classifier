@@ -114,7 +114,7 @@ void softmax(vector<float>& input) {
               [sum, fraction](float x) { return exp(x) * fraction; });
 }
 
-void derivativeSoftmax(vector<float>& input) {}
+float derivativeSoftmax(float input) { return 0; }
 
 // Activation function that is used to introduce non-linearity in the model.
 void relu(vector<float>& input) {
@@ -122,7 +122,7 @@ void relu(vector<float>& input) {
               [](int x) { return max(0, x); });
 }
 
-void derivativeRelu(vector<float>& input) {}
+float derivativeRelu(float& input) { return input > 0 ? 1 : 0; }
 
 // Loss function -- Mean Squared Error (MSE)
 // This often leads to poor result as the gradients become very small.
@@ -137,6 +137,8 @@ int mse(vector<float>& predicted, int target) {
 
     return sum / predicted.size();
 }
+
+int derivativeMse(float predicted, int target) { return 0; }
 
 // Forward pass
 // The forward pass is the process of taking the input data and passing it
@@ -177,27 +179,44 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
+float partialDerivativeWeight(float w) { return 0; }
+
+float partialDerivativeBias(float x) { return 0; }
+
+float partialDerivativeActivation(float x) { return 0; }
+
 void backPropagation(vector<int>& inputLayer, vector<float>& w1,
                      vector<float>& b1, vector<float>& hiddenLayer,
                      vector<float>& w2, vector<float>& b2,
                      vector<float>& outputLayer, int target) {
-    auto loss = mse(outputLayer, target);
+    // The network can essentially be seen as a function that takes the input
+    // and transforms it into an output. The output is dependent on the weights,
+    // biases, and activation functions of the network.
+    //
+    // dC/dW = dC/dA * dA/dZ * dZ/dW
+    // dC/dB = dC/dA * dA/dZ * dZ/dB
+    // dC/dA = dC/dZ * dZ/dA
+    vector<float> gradientOutput(outputLayer.size());
+    transform(outputLayer.begin(), outputLayer.end(), gradientOutput.begin(),
+              [target](float y) { return derivativeMse(y, target); });
 
-    // The output layer is defined by the equation a = softmax(weights *
-    // hiddenLayer + b2) The derivative of this function is easily derived
-    // analytically.
-    //
-    // a = softmax(weights * hiddenLayer + b2) can be seens a a composition of
-    // functions f . g . h, where f(x) = softmax(x), g(x) = x + b2, h(x) =
-    // weights * hiddenLayer.
-    //
-    // This is the chain rule of calculus.
-    // The derivative of a composition of functions is the product of the
-    // derivatives of the functions.
-    //
-    // a' = f' * g' * h'
-    //
+    vector<int> w2Derivative(w2.size());
+    transform(w2.begin(), w2.end(), w2Derivative.begin(),
+              [](float x) { return partialDerivativeWeight(x); });
 
+    vector<int> b2Derivative(b2.size());
+    transform(b2.begin(), b2.end(), b2Derivative.begin(),
+              [](float x) { return partialDerivativeBias(x); });
+
+    vector<float> gradientHidden(hiddenLayer.size());
+    for (size_t i = 0; i < hiddenLayer.size(); ++i) {
+        for (size_t j = 0; j < outputLayer.size(); ++j) {
+            gradientHidden[i] +=
+                gradientOutput[j] * w2[j * hiddenLayer.size() + i];
+        }
+        gradientHidden[i] *= derivativeSoftmax(
+            hiddenLayer[i]); // Apply activation function derivative
+    }
 }
 
 // Backward pass
@@ -211,8 +230,6 @@ void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
               vector<float>& outputLayer, int target) {
     // 1, Calculate the gradients.
     // 2. Update the weights and biases of the network using gradient descent
-
-    auto loss = mse(outputLayer, target);
 }
 
 // For feed forward neural networks it's important to initialize the weights as
@@ -248,7 +265,7 @@ int main() {
     auto w1 = vector<float>(784 * 64);
     auto b1 = vector<float>(64);
 
-    auto hiddenLayer = vector<float>(784);
+    auto hiddenLayer = vector<float>(64);
     auto w2 = vector<float>(64 * 10);
     auto b2 = vector<float>(10);
 
