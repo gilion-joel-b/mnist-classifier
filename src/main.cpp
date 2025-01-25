@@ -196,9 +196,16 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
     // dC/dW = dC/dA * dA/dZ * dZ/dW
     // dC/dB = dC/dA * dA/dZ * dZ/dB
     // dC/dA = dC/dZ * dZ/dA
+    //
+
     vector<float> gradientOutput(outputLayer.size());
-    transform(outputLayer.begin(), outputLayer.end(), gradientOutput.begin(),
-              [target](float y) { return derivativeMse(y, target); });
+    for (int i = 0; i < outputLayer.size(); i++) {
+        if (i == target) {
+            gradientOutput[i] = outputLayer[i] - 1;
+        } else {
+            gradientOutput[i] = outputLayer[i];
+        }
+    }
 
     vector<int> w2Derivative(w2.size());
     transform(w2.begin(), w2.end(), w2Derivative.begin(),
