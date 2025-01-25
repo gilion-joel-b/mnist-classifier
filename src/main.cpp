@@ -189,6 +189,7 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
                      vector<float>& b1, vector<float>& hiddenLayer,
                      vector<float>& w2, vector<float>& b2,
                      vector<float>& outputLayer, int target) {
+    float learningRate = 0.01;
     // The network can essentially be seen as a function that takes the input
     // and transforms it into an output. The output is dependent on the weights,
     // biases, and activation functions of the network.
@@ -196,14 +197,17 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
     // dC/dW = dC/dA * dA/dZ * dZ/dW
     // dC/dB = dC/dA * dA/dZ * dZ/dB
     // dC/dA = dC/dZ * dZ/dA
-    //
 
     vector<float> gradientOutput(outputLayer.size());
     for (int i = 0; i < outputLayer.size(); i++) {
-        if (i == target) {
-            gradientOutput[i] = outputLayer[i] - 1;
-        } else {
-            gradientOutput[i] = outputLayer[i];
+        // Because we are using the softmax function, the derivative of the
+        // output layer is simply the output layer itself minus 1 for the target
+        // class.
+        gradientOutput[i] = (i == target) ? outputLayer[i] - 1 : outputLayer[i];
+
+        for (int j = 0; j < hiddenLayer.size(); j++) {
+            w2[j * outputLayer.size() + i] -=
+                learningRate * gradientOutput[i] * hiddenLayer[j];
         }
     }
 
