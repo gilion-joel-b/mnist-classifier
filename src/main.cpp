@@ -124,22 +124,6 @@ void relu(vector<float>& input) {
 
 float derivativeRelu(float& input) { return input > 0 ? 1 : 0; }
 
-// Loss function -- Mean Squared Error (MSE)
-// This often leads to poor result as the gradients become very small.
-// Cross-entropy loss is often used instead.
-int mse(vector<float>& predicted, int target) {
-
-    int sum = 0;
-    for (int i = 0; i < predicted.size(); i++) {
-        float val = predicted[i] * i;
-        sum += (val - target) * (val - target);
-    }
-
-    return sum / predicted.size();
-}
-
-int derivativeMse(float predicted, int target) { return 0; }
-
 // Forward pass
 // The forward pass is the process of taking the input data and passing it
 // through the neural network to get the output.
@@ -179,12 +163,6 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
-float partialDerivativeWeight(float w) { return 0; }
-
-float partialDerivativeBias(float x) { return 0; }
-
-float partialDerivativeActivation(float x) { return 0; }
-
 void backPropagation(vector<int>& inputLayer, vector<float>& w1,
                      vector<float>& b1, vector<float>& hiddenLayer,
                      vector<float>& w2, vector<float>& b2,
@@ -198,6 +176,7 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
     // dC/dB = dC/dA * dA/dZ * dZ/dB
     // dC/dA = dC/dZ * dZ/dA
 
+    // This is the partial derivative of the cost w.r.t the weights
     vector<float> gradientOutput(outputLayer.size());
     for (int i = 0; i < outputLayer.size(); i++) {
         // Because we are using the softmax function, the derivative of the
@@ -211,22 +190,22 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
         }
     }
 
-    vector<int> w2Derivative(w2.size());
-    transform(w2.begin(), w2.end(), w2Derivative.begin(),
-              [](float x) { return partialDerivativeWeight(x); });
+    // This is the partial derivative of the cost w.r.t the biases
+    vector<float> gradientBias(b2.size());
+    for (int i = 0; i < b2.size(); i++) {
+        b2[i] -= learningRate * gradientOutput[i];
+    }
 
-    vector<int> b2Derivative(b2.size());
-    transform(b2.begin(), b2.end(), b2Derivative.begin(),
-              [](float x) { return partialDerivativeBias(x); });
-
-    vector<float> gradientHidden(hiddenLayer.size());
-    for (size_t i = 0; i < hiddenLayer.size(); ++i) {
-        for (size_t j = 0; j < outputLayer.size(); ++j) {
+    // This is the partial derivative of the cost w.r.t the hidden layer
+    // For backpropagation to work we need to align the shape of the weights
+    // with the shape of the gradient. This is why we need to transpose the
+    // weights.
+    vector<float> gradientHidden(hiddenLayer.size(), .0f);
+    for (int i = 0; i < hiddenLayer.size(); i++) {
+        for (int j = 0; j < outputLayer.size(); j++) {
             gradientHidden[i] +=
-                gradientOutput[j] * w2[j * hiddenLayer.size() + i];
+                gradientOutput[j] * w2[i * outputLayer.size() + j];
         }
-        gradientHidden[i] *= derivativeSoftmax(
-            hiddenLayer[i]); // Apply activation function derivative
     }
 }
 
