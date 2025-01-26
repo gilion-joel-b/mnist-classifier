@@ -209,19 +209,6 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
     }
 }
 
-// Backward pass
-// In the backward pass, we calculate the gradients of the loss function with
-// respect to the weights and biases of the network.
-//
-// We use these gradients to update the weights and biases of the network using
-// the gradient descent algorithm.
-void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
-              vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-              vector<float>& outputLayer, int target) {
-    // 1, Calculate the gradients.
-    // 2. Update the weights and biases of the network using gradient descent
-}
-
 // For feed forward neural networks it's important to initialize the weights as
 // small random numbers.
 // This is because stochastic gradient descent is sensitive to the initial
