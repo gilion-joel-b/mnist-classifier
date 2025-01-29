@@ -122,7 +122,7 @@ void relu(vector<float>& input) {
               [](int x) { return max(0, x); });
 }
 
-float derivativeRelu(float& input) { return input > 0 ? 1 : 0; }
+float derivativeRelu(float& input) { return input > 0 ? 1.0f : .0f; }
 
 // Forward pass
 // The forward pass is the process of taking the input data and passing it
@@ -191,7 +191,6 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
     }
 
     // This is the partial derivative of the cost w.r.t the biases
-    vector<float> gradientBias(b2.size());
     for (int i = 0; i < b2.size(); i++) {
         b2[i] -= learningRate * gradientOutput[i];
     }
@@ -206,6 +205,20 @@ void backPropagation(vector<int>& inputLayer, vector<float>& w1,
             gradientHidden[i] +=
                 gradientOutput[j] * w2[i * outputLayer.size() + j];
         }
+        gradientHidden[i] *= derivativeRelu(hiddenLayer[i]);
+    }
+
+    // We update the weights of the hidden layer.
+    for (int i = 0; i < hiddenLayer.size(); i++) {
+        for (int j = 0; j < inputLayer.size(); j++) {
+            w1[j * hiddenLayer.size() + i] -=
+                learningRate * gradientHidden[i] * inputLayer[j];
+        }
+    }
+
+    // finally we update the biases of the hidden layer.
+    for (int i = 0; i < b1.size(); i++) {
+        b1[i] -= learningRate * gradientHidden[i];
     }
 }
 
