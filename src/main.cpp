@@ -163,11 +163,16 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
-void backPropagation(vector<int>& inputLayer, vector<float>& w1,
-                     vector<float>& b1, vector<float>& hiddenLayer,
-                     vector<float>& w2, vector<float>& b2,
-                     vector<float>& outputLayer, int target) {
+void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+              vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
+              vector<float>& outputLayer, int target) {
     float learningRate = 0.01;
+    // This is the backward pass of the network. It is the process of updating
+    // the weights and biases of the network based on the error of the output.
+    // It uses backpropagation to calculate the gradients of the weights and
+    // biases.
+    //
+    //
     // The network can essentially be seen as a function that takes the input
     // and transforms it into an output. The output is dependent on the weights,
     // biases, and activation functions of the network.
