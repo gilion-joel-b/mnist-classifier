@@ -238,6 +238,27 @@ void initializeWeights(vector<float>& weights, int size) {
         [fraction](float x) { return static_cast<float>(rand()) * fraction; });
 }
 
+void SGD() {
+    // -- Stochastic Gradient Descent --
+    // We will use batches in power of 2, this is because it is more efficient
+    // to use powers of 2 when working with SIMD instructions.
+    //
+    // We will run all examples in parallel, and then update the weights and
+    // biases.
+    //
+    // 1. Spin up a thread for each example in a batch.
+    // 2. Run the forward pass for each thread.
+    // 3. Average the loss of each thread.
+    // 4. Run the backward pass for the average loss.
+    // 6. Repeat until convergence.
+    //
+    // Obvious optimizations:
+    // 1. Use SIMD instructions.
+    // 2. Use a worker pool to avoid the overhead of spinning up threads.
+    //
+    // But start with the simplest implementation first, and then optimize.
+}
+
 int main() {
     auto labelsPath = "mnist/train-labels.idx1-ubyte";
     auto imagesPath = "mnist/train-images.idx3-ubyte";
