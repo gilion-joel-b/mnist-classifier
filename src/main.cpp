@@ -238,7 +238,9 @@ void initializeWeights(vector<float>& weights, int size) {
         [fraction](float x) { return static_cast<float>(rand()) * fraction; });
 }
 
-void SGD() {
+void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+         vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
+         vector<float>& outputLayer, vector<int>& labels, vector<int>& images) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
     // to use powers of 2 when working with SIMD instructions.
@@ -257,6 +259,19 @@ void SGD() {
     // 2. Use a worker pool to avoid the overhead of spinning up threads.
     //
     // But start with the simplest implementation first, and then optimize.
+
+    auto batchSize = 32;
+    auto numBatches = images.size() / batchSize;
+
+    for (int i = 0; i < numBatches; i++) {
+        for (int j = 0; j < batchSize; j++) {
+            auto start = j * 784;
+            auto end = start + 784;
+            auto input =
+                vector<int>(images.begin() + start, images.begin() + end);
+            forward(input, w1, b1, hiddenLayer, w2, b2, outputLayer);
+        }
+    }
 }
 
 int main() {
