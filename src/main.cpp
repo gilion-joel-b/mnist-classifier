@@ -263,6 +263,7 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     auto batchSize = 32;
     auto numBatches = images.size() / batchSize;
     auto averageOutput = vector<float>(outputLayer.size(), .0f);
+    auto averageRate = 1.0 / batchSize;
 
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
@@ -275,6 +276,9 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
                       averageOutput.begin(), averageOutput.begin(),
                       plus<float>());
         }
+        transform(averageOutput.begin(), averageOutput.end(),
+                  averageOutput.begin(),
+                  [averageRate](float x) { return x * averageRate; });
         backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
                  labels[i]);
     }
