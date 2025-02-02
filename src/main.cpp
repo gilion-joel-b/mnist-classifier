@@ -281,6 +281,7 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
                   [averageRate](float x) { return x * averageRate; });
         backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
                  labels[i]);
+        fill(averageOutput.begin(), averageOutput.end(), .0f);
     }
 }
 
