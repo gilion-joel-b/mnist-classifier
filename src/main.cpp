@@ -309,6 +309,8 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
         .dB1 = vector<float>(b1.size(), .0f),
         .dW2 = vector<float>(w2.size(), .0f),
         .dB2 = vector<float>(b2.size(), .0f),
+        .dHidden = vector<float>(hiddenLayer.size(), .0f),
+        .dOutput = vector<float>(outputLayer.size(), .0f),
     };
 
     for (int i = 0; i < numBatches; i++) {
