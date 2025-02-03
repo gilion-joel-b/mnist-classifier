@@ -164,17 +164,42 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
 }
 
 struct Gradients {
-    vector<float> w1;
-    vector<float> b1;
-    vector<float> w2;
-    vector<float> b2;
+    vector<float> dW1;
+    vector<float> dB1;
+    vector<float> dW2;
+    vector<float> dB2;
+    vector<float> dHidden;
+    vector<float> dOutput;
 };
 
 void updateWeights(vector<int>& inputLayer, vector<float>& w1,
                    vector<float>& b1, vector<float>& hiddenLayer,
                    vector<float>& w2, vector<float>& b2,
                    vector<float>& outputLayer, int target, Gradients& gradients,
-                   float learningRate) {}
+                   float learningRate) {
+
+    for (int i = 0; i < outputLayer.size(); i++) {
+        for (int j = 0; j < hiddenLayer.size(); j++) {
+            w2[j * outputLayer.size() + i] -=
+                learningRate * gradients.dOutput[i] * hiddenLayer[j];
+        }
+    }
+
+    for (int i = 0; i < b2.size(); i++) {
+        b2[i] -= learningRate * gradients.dOutput[i];
+    }
+
+    for (int i = 0; i < hiddenLayer.size(); i++) {
+        for (int j = 0; j < inputLayer.size(); j++) {
+            w1[j * hiddenLayer.size() + i] -=
+                learningRate * gradients.dHidden[i] * inputLayer[j];
+        }
+    }
+
+    for (int i = 0; i < b1.size(); i++) {
+        b1[i] -= learningRate * gradients.dHidden[i];
+    }
+}
 
 void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
               vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
@@ -280,10 +305,10 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     auto learningRate = 0.01;
 
     auto gradients = Gradients{
-        .w1 = vector<float>(w1.size(), .0f),
-        .b1 = vector<float>(b1.size(), .0f),
-        .w2 = vector<float>(w2.size(), .0f),
-        .b2 = vector<float>(b2.size(), .0f),
+        .dW1 = vector<float>(w1.size(), .0f),
+        .dB1 = vector<float>(b1.size(), .0f),
+        .dW2 = vector<float>(w2.size(), .0f),
+        .dB2 = vector<float>(b2.size(), .0f),
     };
 
     for (int i = 0; i < numBatches; i++) {
