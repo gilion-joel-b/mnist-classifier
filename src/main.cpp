@@ -163,10 +163,23 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
+struct Gradients {
+    vector<float> w1;
+    vector<float> b1;
+    vector<float> w2;
+    vector<float> b2;
+};
+
+void updateWeights(vector<int>& inputLayer, vector<float>& w1,
+                   vector<float>& b1, vector<float>& hiddenLayer,
+                   vector<float>& w2, vector<float>& b2,
+                   vector<float>& outputLayer, int target, Gradients& gradients,
+                   float learningRate) {}
+
 void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
               vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-              vector<float>& outputLayer, int target) {
-    float learningRate = 0.01;
+              vector<float>& outputLayer, int target, Gradients& gradients,
+              float learningRate) {
     // This is the backward pass of the network. It is the process of updating
     // the weights and biases of the network based on the error of the output.
     // It uses backpropagation to calculate the gradients of the weights and
@@ -264,6 +277,14 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     auto numBatches = images.size() / batchSize;
     auto averageOutput = vector<float>(outputLayer.size(), .0f);
     auto averageRate = 1.0 / batchSize;
+    auto learningRate = 0.01;
+
+    auto gradients = Gradients{
+        .w1 = vector<float>(w1.size(), .0f),
+        .b1 = vector<float>(b1.size(), .0f),
+        .w2 = vector<float>(w2.size(), .0f),
+        .b2 = vector<float>(b2.size(), .0f),
+    };
 
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
@@ -280,7 +301,7 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
                   averageOutput.begin(),
                   [averageRate](float x) { return x * averageRate; });
         backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
-                 labels[i]);
+                 labels[i], gradients, learningRate);
         fill(averageOutput.begin(), averageOutput.end(), .0f);
     }
 }
