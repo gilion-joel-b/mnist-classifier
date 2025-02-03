@@ -267,7 +267,7 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
 
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
-            auto start = j * 784;
+            auto start = (i * batchSize + j) * 784;
             auto end = start + 784;
             auto input =
                 vector<int>(images.begin() + start, images.begin() + end);
