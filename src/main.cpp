@@ -163,10 +163,48 @@ void forward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     softmax(outputLayer);
 }
 
+struct Gradients {
+    vector<float> dW1;
+    vector<float> dB1;
+    vector<float> dW2;
+    vector<float> dB2;
+    vector<float> dHidden;
+    vector<float> dOutput;
+};
+
+void updateWeights(vector<int>& inputLayer, vector<float>& w1,
+                   vector<float>& b1, vector<float>& hiddenLayer,
+                   vector<float>& w2, vector<float>& b2,
+                   vector<float>& outputLayer, int target, Gradients& gradients,
+                   float learningRate) {
+
+    for (int i = 0; i < outputLayer.size(); i++) {
+        for (int j = 0; j < hiddenLayer.size(); j++) {
+            w2[j * outputLayer.size() + i] -=
+                learningRate * gradients.dOutput[i] * hiddenLayer[j];
+        }
+    }
+
+    for (int i = 0; i < b2.size(); i++) {
+        b2[i] -= learningRate * gradients.dOutput[i];
+    }
+
+    for (int i = 0; i < hiddenLayer.size(); i++) {
+        for (int j = 0; j < inputLayer.size(); j++) {
+            w1[j * hiddenLayer.size() + i] -=
+                learningRate * gradients.dHidden[i] * inputLayer[j];
+        }
+    }
+
+    for (int i = 0; i < b1.size(); i++) {
+        b1[i] -= learningRate * gradients.dHidden[i];
+    }
+}
+
 void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
               vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-              vector<float>& outputLayer, int target) {
-    float learningRate = 0.01;
+              vector<float>& outputLayer, int target, Gradients& gradients,
+              float learningRate) {
     // This is the backward pass of the network. It is the process of updating
     // the weights and biases of the network based on the error of the output.
     // It uses backpropagation to calculate the gradients of the weights and
@@ -182,49 +220,60 @@ void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     // dC/dA = dC/dZ * dZ/dA
 
     // This is the partial derivative of the cost w.r.t the weights
-    vector<float> gradientOutput(outputLayer.size());
     for (int i = 0; i < outputLayer.size(); i++) {
         // Because we are using the softmax function, the derivative of the
         // output layer is simply the output layer itself minus 1 for the target
         // class.
-        gradientOutput[i] = (i == target) ? outputLayer[i] - 1 : outputLayer[i];
-
-        for (int j = 0; j < hiddenLayer.size(); j++) {
-            w2[j * outputLayer.size() + i] -=
-                learningRate * gradientOutput[i] * hiddenLayer[j];
-        }
+        gradients.dOutput[i] +=
+            (i == target) ? outputLayer[i] - 1 : outputLayer[i];
     }
 
     // This is the partial derivative of the cost w.r.t the biases
     for (int i = 0; i < b2.size(); i++) {
-        b2[i] -= learningRate * gradientOutput[i];
+        gradients.dB2[i] += gradients.dOutput[i];
     }
 
     // This is the partial derivative of the cost w.r.t the hidden layer
     // For backpropagation to work we need to align the shape of the weights
     // with the shape of the gradient. This is why we need to transpose the
     // weights.
-    vector<float> gradientHidden(hiddenLayer.size(), .0f);
     for (int i = 0; i < hiddenLayer.size(); i++) {
+        auto sum = 0.0f;
         for (int j = 0; j < outputLayer.size(); j++) {
-            gradientHidden[i] +=
-                gradientOutput[j] * w2[i * outputLayer.size() + j];
+            sum += gradients.dOutput[j] * w2[i * outputLayer.size() + j];
         }
-        gradientHidden[i] *= derivativeRelu(hiddenLayer[i]);
+        gradients.dHidden[i] += sum * derivativeRelu(hiddenLayer[i]);
     }
 
     // We update the weights of the hidden layer.
     for (int i = 0; i < hiddenLayer.size(); i++) {
         for (int j = 0; j < inputLayer.size(); j++) {
-            w1[j * hiddenLayer.size() + i] -=
-                learningRate * gradientHidden[i] * inputLayer[j];
+            gradients.dW1[i] = gradients.dHidden[i] * inputLayer[j];
         }
     }
 
     // finally we update the biases of the hidden layer.
     for (int i = 0; i < b1.size(); i++) {
-        b1[i] -= learningRate * gradientHidden[i];
+        gradients.dB1[i] += gradients.dHidden[i];
     }
+}
+
+void averageGradients(Gradients& gradients, int batchSize) {
+    auto averageRate = 1.0 / batchSize;
+    transform(gradients.dW1.begin(), gradients.dW1.end(), gradients.dW1.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dB1.begin(), gradients.dB1.end(), gradients.dB1.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dW2.begin(), gradients.dW2.end(), gradients.dW2.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dB2.begin(), gradients.dB2.end(), gradients.dB2.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dHidden.begin(), gradients.dHidden.end(),
+              gradients.dHidden.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dOutput.begin(), gradients.dOutput.end(),
+              gradients.dOutput.begin(),
+              [averageRate](float x) { return x * averageRate; });
 }
 
 // For feed forward neural networks it's important to initialize the weights as
@@ -238,9 +287,19 @@ void initializeWeights(vector<float>& weights, int size) {
         [fraction](float x) { return static_cast<float>(rand()) * fraction; });
 }
 
-void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
-         vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-         vector<float>& outputLayer, vector<int>& labels, vector<int>& images) {
+void reinitializeGradients(Gradients& gradients) {
+    fill(gradients.dW1.begin(), gradients.dW1.end(), .0f);
+    fill(gradients.dB1.begin(), gradients.dB1.end(), .0f);
+    fill(gradients.dW2.begin(), gradients.dW2.end(), .0f);
+    fill(gradients.dB2.begin(), gradients.dB2.end(), .0f);
+    fill(gradients.dHidden.begin(), gradients.dHidden.end(), .0f);
+    fill(gradients.dOutput.begin(), gradients.dOutput.end(), .0f);
+}
+
+void train(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+           vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
+           vector<float>& outputLayer, vector<int>& labels,
+           vector<int>& images) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
     // to use powers of 2 when working with SIMD instructions.
@@ -264,6 +323,16 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     auto numBatches = images.size() / batchSize;
     auto averageOutput = vector<float>(outputLayer.size(), .0f);
     auto averageRate = 1.0 / batchSize;
+    auto learningRate = 0.01;
+
+    auto gradients = Gradients{
+        .dW1 = vector<float>(w1.size(), .0f),
+        .dB1 = vector<float>(b1.size(), .0f),
+        .dW2 = vector<float>(w2.size(), .0f),
+        .dB2 = vector<float>(b2.size(), .0f),
+        .dHidden = vector<float>(hiddenLayer.size(), .0f),
+        .dOutput = vector<float>(outputLayer.size(), .0f),
+    };
 
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
@@ -272,16 +341,13 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
             auto input =
                 vector<int>(images.begin() + start, images.begin() + end);
             forward(input, w1, b1, hiddenLayer, w2, b2, outputLayer);
-            transform(outputLayer.begin(), outputLayer.end(),
-                      averageOutput.begin(), averageOutput.begin(),
-                      plus<float>());
+            backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
+                     labels[i], gradients, learningRate);
         }
-        transform(averageOutput.begin(), averageOutput.end(),
-                  averageOutput.begin(),
-                  [averageRate](float x) { return x * averageRate; });
-        backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
-                 labels[i]);
-        fill(averageOutput.begin(), averageOutput.end(), .0f);
+        averageGradients(gradients, batchSize);
+        updateWeights(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
+                      labels[i], gradients, learningRate);
+        reinitializeGradients(gradients);
     }
 }
 
