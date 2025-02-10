@@ -258,6 +258,24 @@ void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     }
 }
 
+void averageGradients(Gradients& gradients, int batchSize) {
+    auto averageRate = 1.0 / batchSize;
+    transform(gradients.dW1.begin(), gradients.dW1.end(), gradients.dW1.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dB1.begin(), gradients.dB1.end(), gradients.dB1.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dW2.begin(), gradients.dW2.end(), gradients.dW2.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dB2.begin(), gradients.dB2.end(), gradients.dB2.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dHidden.begin(), gradients.dHidden.end(),
+              gradients.dHidden.begin(),
+              [averageRate](float x) { return x * averageRate; });
+    transform(gradients.dOutput.begin(), gradients.dOutput.end(),
+              gradients.dOutput.begin(),
+              [averageRate](float x) { return x * averageRate; });
+}
+
 // For feed forward neural networks it's important to initialize the weights as
 // small random numbers.
 // This is because stochastic gradient descent is sensitive to the initial
@@ -267,6 +285,15 @@ void initializeWeights(vector<float>& weights, int size) {
     transform(
         weights.begin(), weights.end(), weights.begin(),
         [fraction](float x) { return static_cast<float>(rand()) * fraction; });
+}
+
+void reinitializeGradients(Gradients& gradients) {
+    fill(gradients.dW1.begin(), gradients.dW1.end(), .0f);
+    fill(gradients.dB1.begin(), gradients.dB1.end(), .0f);
+    fill(gradients.dW2.begin(), gradients.dW2.end(), .0f);
+    fill(gradients.dB2.begin(), gradients.dB2.end(), .0f);
+    fill(gradients.dHidden.begin(), gradients.dHidden.end(), .0f);
+    fill(gradients.dOutput.begin(), gradients.dOutput.end(), .0f);
 }
 
 void train(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
@@ -317,10 +344,10 @@ void train(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
             backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
                      labels[i], gradients, learningRate);
         }
-        transform(averageOutput.begin(), averageOutput.end(),
-                  averageOutput.begin(),
-                  [averageRate](float x) { return x * averageRate; });
-        fill(averageOutput.begin(), averageOutput.end(), .0f);
+        averageGradients(gradients, batchSize);
+        updateWeights(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
+                      labels[i], gradients, learningRate);
+        reinitializeGradients(gradients);
     }
 }
 
