@@ -220,48 +220,41 @@ void backward(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
     // dC/dA = dC/dZ * dZ/dA
 
     // This is the partial derivative of the cost w.r.t the weights
-    vector<float> gradientOutput(outputLayer.size());
     for (int i = 0; i < outputLayer.size(); i++) {
         // Because we are using the softmax function, the derivative of the
         // output layer is simply the output layer itself minus 1 for the target
         // class.
-        gradientOutput[i] = (i == target) ? outputLayer[i] - 1 : outputLayer[i];
-
-        for (int j = 0; j < hiddenLayer.size(); j++) {
-            w2[j * outputLayer.size() + i] -=
-                learningRate * gradientOutput[i] * hiddenLayer[j];
-        }
+        gradients.dOutput[i] +=
+            (i == target) ? outputLayer[i] - 1 : outputLayer[i];
     }
 
     // This is the partial derivative of the cost w.r.t the biases
     for (int i = 0; i < b2.size(); i++) {
-        b2[i] -= learningRate * gradientOutput[i];
+        gradients.dB2[i] += gradients.dOutput[i];
     }
 
     // This is the partial derivative of the cost w.r.t the hidden layer
     // For backpropagation to work we need to align the shape of the weights
     // with the shape of the gradient. This is why we need to transpose the
     // weights.
-    vector<float> gradientHidden(hiddenLayer.size(), .0f);
     for (int i = 0; i < hiddenLayer.size(); i++) {
+        auto sum = 0.0f;
         for (int j = 0; j < outputLayer.size(); j++) {
-            gradientHidden[i] +=
-                gradientOutput[j] * w2[i * outputLayer.size() + j];
+            sum += gradients.dOutput[j] * w2[i * outputLayer.size() + j];
         }
-        gradientHidden[i] *= derivativeRelu(hiddenLayer[i]);
+        gradients.dHidden[i] += sum * derivativeRelu(hiddenLayer[i]);
     }
 
     // We update the weights of the hidden layer.
     for (int i = 0; i < hiddenLayer.size(); i++) {
         for (int j = 0; j < inputLayer.size(); j++) {
-            w1[j * hiddenLayer.size() + i] -=
-                learningRate * gradientHidden[i] * inputLayer[j];
+            gradients.dW1[i] = gradients.dHidden[i] * inputLayer[j];
         }
     }
 
     // finally we update the biases of the hidden layer.
     for (int i = 0; i < b1.size(); i++) {
-        b1[i] -= learningRate * gradientHidden[i];
+        gradients.dB1[i] += gradients.dHidden[i];
     }
 }
 
@@ -276,9 +269,10 @@ void initializeWeights(vector<float>& weights, int size) {
         [fraction](float x) { return static_cast<float>(rand()) * fraction; });
 }
 
-void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
-         vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
-         vector<float>& outputLayer, vector<int>& labels, vector<int>& images) {
+void train(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
+           vector<float>& hiddenLayer, vector<float>& w2, vector<float>& b2,
+           vector<float>& outputLayer, vector<int>& labels,
+           vector<int>& images) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
     // to use powers of 2 when working with SIMD instructions.
@@ -320,15 +314,12 @@ void SGD(vector<int>& inputLayer, vector<float>& w1, vector<float>& b1,
             auto input =
                 vector<int>(images.begin() + start, images.begin() + end);
             forward(input, w1, b1, hiddenLayer, w2, b2, outputLayer);
-            transform(outputLayer.begin(), outputLayer.end(),
-                      averageOutput.begin(), averageOutput.begin(),
-                      plus<float>());
+            backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
+                     labels[i], gradients, learningRate);
         }
         transform(averageOutput.begin(), averageOutput.end(),
                   averageOutput.begin(),
                   [averageRate](float x) { return x * averageRate; });
-        backward(inputLayer, w1, b1, hiddenLayer, w2, b2, averageOutput,
-                 labels[i], gradients, learningRate);
         fill(averageOutput.begin(), averageOutput.end(), .0f);
     }
 }
