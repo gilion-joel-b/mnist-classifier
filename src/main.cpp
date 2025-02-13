@@ -10,13 +10,14 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+using std::vector, std::transform, std::accumulate, std::fill, std::max,
+    std::ifstream, std::runtime_error, std::string, std::cout, std::endl,
+    std::ios_base, std::function;
 
 void benchmark(string ref, string arg, function<vector<int>(string)> f) {
-    using chrono::duration;
-    using chrono::duration_cast;
-    using chrono::high_resolution_clock;
-    using chrono::milliseconds;
+    using namespace std;
+    using chrono::duration, chrono::duration_cast,
+        chrono::high_resolution_clock, chrono::milliseconds;
 
     cout << "Benchmarking " << ref << endl;
 
