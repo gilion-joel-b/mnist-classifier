@@ -143,6 +143,21 @@ void relu(vector<float>& input) {
               [](int x) { return max(0, x); });
 }
 
+int crossEntropyLoss(vector<float>& output, int target) {
+    // The cross entropy loss is a measure of how well the network is
+    // performing. It is the difference between the predicted output and the
+    // actual output.
+    //
+    // The cross entropy loss is calculated as follows:
+    // -sum(y * log(y_hat))
+    //
+    // Where y is the actual output and y_hat is the predicted output.
+    //
+    // The cross entropy loss is used to update the weights and biases of the
+    // network.
+    return -log(output[target]);
+}
+
 float derivativeRelu(float& input) { return input > 0 ? 1.0f : .0f; }
 
 // Forward pass
@@ -153,7 +168,7 @@ float derivativeRelu(float& input) { return input > 0 ? 1.0f : .0f; }
 // bias. Then we apply the activation function to the result.
 //
 // We do this for each layer of the network.
-void forward(Model& model) {
+float forward(Model& model, int target) {
     // 1. Calculate the dot product of the input layer and the weights, and add
     // the bias.
     // 2. Apply the activation function to the result (ReLU).
@@ -180,6 +195,8 @@ void forward(Model& model) {
     }
 
     softmax(model.outputLayer);
+
+    return crossEntropyLoss(model.outputLayer, target);
 }
 
 void updateWeights(Model& model, int target, Gradients& gradients) {
@@ -301,8 +318,8 @@ void reinitializeGradients(Gradients& gradients) {
     fill(gradients.dOutput.begin(), gradients.dOutput.end(), .0f);
 }
 
-void train(Model& model, Gradients& gradients, vector<int>& labels,
-           vector<int>& images, int batchSize, int numBatches) {
+float train(Model& model, Gradients& gradients, vector<int>& labels,
+            vector<int>& images, int batchSize, int numBatches) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
     // to use powers of 2 when working with SIMD instructions.
@@ -322,19 +339,21 @@ void train(Model& model, Gradients& gradients, vector<int>& labels,
     //
     // But start with the simplest implementation first, and then optimize.
 
+    auto totalLoss = 0.f;
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
             auto start = (i * batchSize + j) * 784;
             auto end = start + 784;
             auto input =
                 vector<int>(images.begin() + start, images.begin() + end);
-            forward(model);
+            totalLoss += forward(model, labels[i]);
             backward(model, labels[i], gradients);
         }
         averageGradients(gradients, batchSize);
         updateWeights(model, labels[i], gradients);
         reinitializeGradients(gradients);
     }
+    return totalLoss / (numBatches * batchSize);
 }
 
 int main() {
@@ -383,7 +402,9 @@ int main() {
     initializeWeights(model.w1, model.w1.size());
 
     for (int i = 0; i < epochs; i++) {
-        train(model, gradients, labels, images, batchSize, numBatches);
+        auto epoch_loss =
+            train(model, gradients, labels, images, batchSize, numBatches);
+        cout << "Epoch: " << i << " Loss: " << epoch_loss << '\n';
     }
 
     return 0;
