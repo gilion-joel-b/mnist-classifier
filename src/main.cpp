@@ -6,6 +6,7 @@
 #include <ios>
 #include <iostream>
 #include <numeric>
+#include <ratio>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -15,9 +16,8 @@ using std::vector, std::transform, std::accumulate, std::fill, std::max,
     std::ios_base, std::function;
 
 void benchmark(string ref, string arg, function<vector<int>(string)> f) {
-    using namespace std;
-    using chrono::duration, chrono::duration_cast,
-        chrono::high_resolution_clock, chrono::milliseconds;
+    using std::milli, std::chrono::duration, std::chrono::duration_cast,
+        std::chrono::high_resolution_clock, std::chrono::milliseconds;
 
     cout << "Benchmarking " << ref << endl;
 
@@ -29,7 +29,7 @@ void benchmark(string ref, string arg, function<vector<int>(string)> f) {
 
     auto t2 = high_resolution_clock::now();
     // Getting number of milliseconds as an integer.
-    auto ms_int = duration_cast<chrono::milliseconds>(t2 - t1);
+    auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
     // Getting number of milliseconds as a double.
     duration<double, milli> ms_double = t2 - t1;
