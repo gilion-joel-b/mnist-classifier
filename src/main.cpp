@@ -125,6 +125,16 @@ void relu(vector<float>& input) {
 
 float derivativeRelu(float& input) { return input > 0 ? 1.0f : .0f; }
 
+struct Model {
+    vector<int> inputLayer;
+    vector<float> hiddenLayer;
+    vector<float> outputLayer;
+    vector<float> w1;
+    vector<float> b1;
+    vector<float> w2;
+    vector<float> b2;
+};
+
 // Forward pass
 // The forward pass is the process of taking the input data and passing it
 // through the neural network to get the output.
