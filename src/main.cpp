@@ -385,6 +385,7 @@ int main() {
 
     // Images per batch
     auto batchSize = 32;
+    // Multiply by 784 to get the number of pixels in the image.
     auto averageRate = 1.0 / (batchSize * 784);
     auto numBatches = images.size() * averageRate;
     auto learningRate = 0.01;
