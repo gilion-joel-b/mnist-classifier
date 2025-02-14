@@ -247,6 +247,11 @@ void backward(Model& model, int target, Gradients& gradients) {
         // class.
         gradients.dOutput[i] +=
             (i == target) ? model.outputLayer[i] - 1 : model.outputLayer[i];
+
+        for (int j = 0; j < model.hiddenLayer.size(); j++) {
+            gradients.dW2[i * model.outputLayer.size() + i] =
+                gradients.dOutput[i] * model.hiddenLayer[j];
+        }
     }
 
     // This is the partial derivative of the cost w.r.t the biases
@@ -267,14 +272,12 @@ void backward(Model& model, int target, Gradients& gradients) {
         gradients.dHidden[i] += sum * derivativeRelu(model.hiddenLayer[i]);
     }
 
-    // We update the weights of the hidden layer.
     for (int i = 0; i < model.hiddenLayer.size(); i++) {
         for (int j = 0; j < model.inputLayer.size(); j++) {
             gradients.dW1[i] = gradients.dHidden[i] * model.inputLayer[j];
         }
     }
 
-    // finally we update the biases of the hidden layer.
     for (int i = 0; i < model.b1.size(); i++) {
         gradients.dB1[i] += gradients.dHidden[i];
     }
@@ -342,12 +345,14 @@ float train(Model& model, Gradients& gradients, vector<int>& labels,
     auto totalLoss = 0.f;
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
-            auto start = (i * batchSize + j) * 784;
+            auto idx = i * batchSize + j;
+            auto start = idx * 784;
             auto end = start + 784;
             auto input =
                 vector<int>(images.begin() + start, images.begin() + end);
-            totalLoss += forward(model, labels[i]);
-            backward(model, labels[i], gradients);
+            model.inputLayer = input;
+            totalLoss += forward(model, labels[idx]);
+            backward(model, labels[idx], gradients);
         }
         averageGradients(gradients, batchSize);
         updateWeights(model, labels[i], gradients);
