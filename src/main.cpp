@@ -135,12 +135,10 @@ void softmax(vector<float>& input) {
               [sum, fraction](float x) { return exp(x) * fraction; });
 }
 
-float derivativeSoftmax(float input) { return 0; }
-
 // Activation function that is used to introduce non-linearity in the model.
 void relu(vector<float>& input) {
     transform(input.begin(), input.end(), input.begin(),
-              [](int x) { return max(0, x); });
+              [](float x) { return max(.0f, x); });
 }
 
 int crossEntropyLoss(vector<float>& output, int target) {
@@ -199,8 +197,7 @@ float forward(Model& model, int target) {
     return crossEntropyLoss(model.outputLayer, target);
 }
 
-void updateWeights(Model& model, int target, Gradients& gradients) {
-
+void updateWeights(Model& model, Gradients& gradients) {
     for (int i = 0; i < model.outputLayer.size(); i++) {
         for (int j = 0; j < model.hiddenLayer.size(); j++) {
             model.w2[j * model.outputLayer.size() + i] -= model.learningRate *
@@ -249,7 +246,7 @@ void backward(Model& model, int target, Gradients& gradients) {
             (i == target) ? model.outputLayer[i] - 1 : model.outputLayer[i];
 
         for (int j = 0; j < model.hiddenLayer.size(); j++) {
-            gradients.dW2[i * model.outputLayer.size() + i] =
+            gradients.dW2[i * model.outputLayer.size() + j] =
                 gradients.dOutput[i] * model.hiddenLayer[j];
         }
     }
@@ -274,7 +271,8 @@ void backward(Model& model, int target, Gradients& gradients) {
 
     for (int i = 0; i < model.hiddenLayer.size(); i++) {
         for (int j = 0; j < model.inputLayer.size(); j++) {
-            gradients.dW1[i] = gradients.dHidden[i] * model.inputLayer[j];
+            gradients.dW1[i * model.hiddenLayer.size() + j] =
+                gradients.dHidden[i] * model.inputLayer[j];
         }
     }
 
@@ -342,7 +340,7 @@ float train(Model& model, Gradients& gradients, vector<int>& labels,
     //
     // But start with the simplest implementation first, and then optimize.
 
-    auto totalLoss = 0.f;
+    auto totalLoss = .0f;
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
             auto idx = i * batchSize + j;
@@ -355,7 +353,7 @@ float train(Model& model, Gradients& gradients, vector<int>& labels,
             backward(model, labels[idx], gradients);
         }
         averageGradients(gradients, batchSize);
-        updateWeights(model, labels[i], gradients);
+        updateWeights(model, gradients);
         reinitializeGradients(gradients);
     }
     return totalLoss / (numBatches * batchSize);
