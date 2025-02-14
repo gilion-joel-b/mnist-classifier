@@ -86,17 +86,17 @@ auto loadImages(string path) {
     images.seekg(16, images.beg);
 
     int imageSize = 28 * 28;
-    int numImages = (imagesLength - 16);
+    int numImages = (imagesLength - 16) / imageSize;
 
     vector<unsigned char> buffer(imageSize * numImages);
-    images.read(reinterpret_cast<char*>(buffer.data()), numImages);
+    images.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
     // Instead of returning a list of 28x28 matrices, we can return a list
     // of all values.
     // This is because this way we can store it in contiguous memory which
     // improves cache locality, which is important for performance.
     // Also, it allows us to use SIMD instructions to process the data.
-    vector<int> imageValues(imageSize);
+    vector<int> imageValues(imageSize * numImages);
     for (int i = 0; i < numImages; i++) {
         imageValues[i] = static_cast<int>(buffer[i]);
     }
@@ -303,7 +303,7 @@ void averageGradients(Gradients& gradients, int batchSize) {
 // small random numbers.
 // This is because stochastic gradient descent is sensitive to the initial
 // values of the weights.
-void initializeWeights(vector<float>& weights, int size) {
+void initializeWeights(vector<float>& weights) {
     auto fraction = 1.0 / RAND_MAX;
     transform(
         weights.begin(), weights.end(), weights.begin(),
@@ -359,11 +359,25 @@ float train(Model& model, Gradients& gradients, vector<int>& labels,
     return totalLoss / (numBatches * batchSize);
 }
 
+int predict(Model& model, vector<int>& image) {
+    model.inputLayer = image;
+    forward(model, 0);
+    return std::distance(
+        model.outputLayer.begin(),
+        std::max_element(model.outputLayer.begin(), model.outputLayer.end()));
+}
+
 int main() {
     auto labelsPath = "mnist/train-labels.idx1-ubyte";
     auto imagesPath = "mnist/train-images.idx3-ubyte";
     auto labels = loadLabels(labelsPath);
     auto images = loadImages(imagesPath);
+
+    auto testLabelsPath = "mnist/t10k-labels.idx1-ubyte";
+    auto testImagesPath = "mnist/t10k-images.idx3-ubyte";
+
+    auto testLabels = loadLabels(testLabelsPath);
+    auto testImages = loadImages(testImagesPath);
 
     // Theoretically, since we are finding the correlatoin between the pixels of
     // the image and the label, we need to map 28 * 28 pixels to a label, which
@@ -381,6 +395,7 @@ int main() {
         .inputLayer = vector<int>(784),
         .hiddenLayer = vector<float>(64),
         .outputLayer = vector<float>(10),
+        .w1 = vector<float>(784 * 64),
         .b1 = vector<float>(64),
         .w2 = vector<float>(64 * 10),
         .b2 = vector<float>(10),
@@ -391,7 +406,6 @@ int main() {
     // Multiply by 784 to get the number of pixels in the image.
     auto averageRate = 1.0 / (batchSize * 784);
     auto numBatches = images.size() * averageRate;
-    auto learningRate = 0.01;
     auto epochs = 10;
 
     auto gradients = Gradients{
@@ -403,12 +417,21 @@ int main() {
         .dOutput = vector<float>(model.outputLayer.size(), .0f),
     };
 
-    initializeWeights(model.w1, model.w1.size());
+    initializeWeights(model.w1);
 
     for (int i = 0; i < epochs; i++) {
         auto epoch_loss =
             train(model, gradients, labels, images, batchSize, numBatches);
         cout << "Epoch: " << i << " Loss: " << epoch_loss << '\n';
+    }
+
+    for (int i = 0; i < 10; i++) {
+        auto idx = i * 784;
+        auto image = vector<int>(testImages.begin() + idx,
+                                 testImages.begin() + idx + 784);
+        auto prediction = predict(model, image);
+        cout << "Prediction: " << prediction << " Actual: " << testLabels[i]
+             << '\n';
     }
 
     return 0;
