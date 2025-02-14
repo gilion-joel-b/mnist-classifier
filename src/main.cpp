@@ -305,9 +305,10 @@ void averageGradients(Gradients& gradients, int batchSize) {
 // values of the weights.
 void initializeWeights(vector<float>& weights) {
     auto fraction = 1.0 / RAND_MAX;
-    transform(
-        weights.begin(), weights.end(), weights.begin(),
-        [fraction](float x) { return static_cast<float>(rand()) * fraction; });
+    transform(weights.begin(), weights.end(), weights.begin(),
+              [fraction](float x) {
+                  return static_cast<float>(rand()) * fraction - 0.5f;
+              });
 }
 
 void reinitializeGradients(Gradients& gradients) {
