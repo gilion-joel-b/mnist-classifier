@@ -96,9 +96,9 @@ auto loadImages(string path) {
     // This is because this way we can store it in contiguous memory which
     // improves cache locality, which is important for performance.
     // Also, it allows us to use SIMD instructions to process the data.
-    vector<int> imageValues(imageSize * numImages);
+    vector<float> imageValues(imageSize * numImages);
     for (int i = 0; i < numImages; i++) {
-        imageValues[i] = static_cast<int>(buffer[i]);
+        imageValues[i] = static_cast<float>(buffer[i]);
     }
 
     return imageValues;
@@ -320,7 +320,7 @@ void reinitializeGradients(Gradients& gradients) {
 }
 
 float train(Model& model, Gradients& gradients, vector<int>& labels,
-            vector<int>& images, int batchSize, int numBatches) {
+            vector<float>& images, int batchSize, int numBatches) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
     // to use powers of 2 when working with SIMD instructions.
@@ -418,6 +418,7 @@ int main() {
     };
 
     initializeWeights(model.w1);
+    initializeWeights(model.w2);
 
     for (int i = 0; i < epochs; i++) {
         auto epoch_loss =
