@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <functional>
 #include <ios>
@@ -200,7 +201,7 @@ float forward(Model& model, int target) {
 void updateWeights(Model& model, Gradients& gradients) {
     for (int i = 0; i < model.outputLayer.size(); i++) {
         for (int j = 0; j < model.hiddenLayer.size(); j++) {
-            model.w2[j * model.outputLayer.size() + i] -= model.learningRate *
+            model.w2[i * model.hiddenLayer.size() + j] -= model.learningRate *
                                                           gradients.dOutput[i] *
                                                           model.hiddenLayer[j];
         }
@@ -212,7 +213,7 @@ void updateWeights(Model& model, Gradients& gradients) {
 
     for (int i = 0; i < model.hiddenLayer.size(); i++) {
         for (int j = 0; j < model.inputLayer.size(); j++) {
-            model.w1[j * model.hiddenLayer.size() + i] -=
+            model.w1[i * model.inputLayer.size() + j] -=
                 model.learningRate * gradients.dHidden[i] * model.inputLayer[j];
         }
     }
@@ -246,7 +247,7 @@ void backward(Model& model, int target, Gradients& gradients) {
             (i == target) ? model.outputLayer[i] - 1 : model.outputLayer[i];
 
         for (int j = 0; j < model.hiddenLayer.size(); j++) {
-            gradients.dW2[i * model.outputLayer.size() + j] =
+            gradients.dW2[i * model.hiddenLayer.size() + j] =
                 gradients.dOutput[i] * model.hiddenLayer[j];
         }
     }
