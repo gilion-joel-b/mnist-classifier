@@ -174,22 +174,24 @@ float forward(Model& model, int target) {
     // the bias
     // 4. Apply the activation function to the result (Softmax).
 
-    for (int j = 0; j < 64; j++) {
+    for (int i = 0; i < model.hiddenLayer.size(); i++) {
         float sum = 0;
-        for (int i = 0; i < 784; i++) {
-            sum += model.inputLayer[i] * model.w1[i + j * 784];
+        for (int j = 0; j < model.inputLayer.size(); j++) {
+            sum +=
+                model.inputLayer[j] * model.w1[j + i * model.inputLayer.size()];
         }
-        model.hiddenLayer[j] = sum + model.b1[j];
+        model.hiddenLayer[i] = sum + model.b1[i];
     }
 
     relu(model.hiddenLayer);
 
-    for (int j = 0; j < 10; j++) {
+    for (int i = 0; i < model.outputLayer.size(); i++) {
         float sum = 0;
-        for (int i = 0; i < 64; i++) {
-            sum += model.hiddenLayer[i] * model.w2[i + j * 64];
+        for (int j = 0; j < model.hiddenLayer.size(); j++) {
+            sum += model.hiddenLayer[j] *
+                   model.w2[j + i * model.hiddenLayer.size()];
         }
-        model.outputLayer[j] = sum + model.b2[j];
+        model.outputLayer[i] = sum + model.b2[i];
     }
 
     softmax(model.outputLayer);
@@ -246,7 +248,7 @@ void backward(Model& model, int target, Gradients& gradients) {
             (i == target) ? model.outputLayer[i] - 1 : model.outputLayer[i];
 
         for (int j = 0; j < model.hiddenLayer.size(); j++) {
-            gradients.dW2[i * model.hiddenLayer.size() + j] =
+            gradients.dW2[i * model.hiddenLayer.size() + j] +=
                 gradients.dOutput[i] * model.hiddenLayer[j];
         }
     }
@@ -264,14 +266,14 @@ void backward(Model& model, int target, Gradients& gradients) {
         auto sum = 0.0f;
         for (int j = 0; j < model.outputLayer.size(); j++) {
             sum += gradients.dOutput[j] *
-                   model.w2[i * model.outputLayer.size() + j];
+                   model.w2[j * model.hiddenLayer.size() + i];
         }
         gradients.dHidden[i] += sum * derivativeRelu(model.hiddenLayer[i]);
     }
 
     for (int i = 0; i < model.hiddenLayer.size(); i++) {
         for (int j = 0; j < model.inputLayer.size(); j++) {
-            gradients.dW1[i * model.hiddenLayer.size() + j] =
+            gradients.dW1[i * model.inputLayer.size() + j] +=
                 gradients.dHidden[i] * model.inputLayer[j];
         }
     }
