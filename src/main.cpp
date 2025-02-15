@@ -86,19 +86,18 @@ auto loadImages(string path) {
     int imagesLength = images.tellg();
     images.seekg(16, images.beg);
 
-    int imageSize = 28 * 28;
-    int numImages = (imagesLength - 16) / imageSize;
+    int pixels = (imagesLength - 16);
 
-    vector<unsigned char> buffer(imageSize * numImages);
-    images.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
+    vector<unsigned char> buffer(pixels);
+    images.read(reinterpret_cast<char*>(buffer.data()), pixels);
 
     // Instead of returning a list of 28x28 matrices, we can return a list
     // of all values.
     // This is because this way we can store it in contiguous memory which
     // improves cache locality, which is important for performance.
     // Also, it allows us to use SIMD instructions to process the data.
-    vector<float> imageValues(imageSize * numImages);
-    for (int i = 0; i < numImages; i++) {
+    vector<float> imageValues(pixels);
+    for (int i = 0; i < pixels; i++) {
         imageValues[i] = static_cast<float>(buffer[i]);
     }
 
@@ -381,11 +380,14 @@ int main() {
     auto testLabels = loadLabels(testLabelsPath);
     auto testImages = loadImages(testImagesPath);
 
-    // Theoretically, since we are finding the correlatoin between the pixels of
-    // the image and the label, we need to map 28 * 28 pixels to a label, which
+    // Theoretically, since we are finding the correlatoin between the
+    // pixels of
+    // the image and the label, we need to map 28 * 28 pixels to a label,
+    // which
     // is 784 pixels.
     //
-    // Since we need to find a correlation between each pixel and the label, we
+    // Since we need to find a correlation between each pixel and the
+    // label, we
     // need two layers which are fully connected.
 
     // -- Model Architecture --
