@@ -98,7 +98,7 @@ auto loadImages(string path) {
     // Also, it allows us to use SIMD instructions to process the data.
     vector<float> imageValues(pixels);
     for (int i = 0; i < pixels; i++) {
-        imageValues[i] = static_cast<float>(buffer[i]);
+        imageValues[i] = static_cast<float>(buffer[i]) / 255.0f;
     }
 
     return imageValues;
@@ -126,13 +126,28 @@ struct Gradients {
 
 // Activation function that is used to squash the output of the network to a
 // probability distribution.
-void softmax(vector<float>& input) {
-    auto sum = accumulate(input.begin(), input.end(), 0.0,
-                          [](float a, float b) { return a + exp(b); });
+// void softmax(vector<float>& input) {
+//    auto sum = accumulate(input.begin(), input.end(), 0.0,
+//                          [](float a, float b) { return a + exp(b); });
+//
+//    auto fraction = 1.0 / sum;
+//    transform(input.begin(), input.end(), input.begin(),
+//              [sum, fraction](float x) { return exp(x) * fraction; });
+//}
 
+void softmax(vector<float>& input) {
+    if (input.empty())
+        return;
+
+    auto maxVal = *std::max_element(input.begin(), input.end());
+    vector<float> exp_vals(input.size());
+    transform(input.begin(), input.end(), exp_vals.begin(),
+              [maxVal](float x) { return exp(x - maxVal); });
+
+    auto sum = accumulate(exp_vals.begin(), exp_vals.end(), 0.0f);
     auto fraction = 1.0 / sum;
-    transform(input.begin(), input.end(), input.begin(),
-              [sum, fraction](float x) { return exp(x) * fraction; });
+    transform(exp_vals.begin(), exp_vals.end(), input.begin(),
+              [fraction](float x) { return x * fraction; });
 }
 
 // Activation function that is used to introduce non-linearity in the model.
@@ -141,7 +156,7 @@ void relu(vector<float>& input) {
               [](float x) { return max(.0f, x); });
 }
 
-int crossEntropyLoss(vector<float>& output, int target) {
+float crossEntropyLoss(vector<float>& output, int target) {
     // The cross entropy loss is a measure of how well the network is
     // performing. It is the difference between the predicted output and the
     // actual output.
