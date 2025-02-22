@@ -322,13 +322,12 @@ void averageGradients(Gradients& gradients, int batchSize) {
 // This is because stochastic gradient descent is sensitive to the initial
 // values of the weights.
 void initializeWeights(vector<float>& weights, float n) {
-    auto std = sqrt(2.0 / n);
-    std::normal_distribution<float> normal(0, std);
-    std::default_random_engine generator;
+    float stddev = sqrt(2.0 / n);
+    std::normal_distribution<float> normal(0, stddev);
+    std::random_device rd;
+    std::default_random_engine generator(rd());
     transform(weights.begin(), weights.end(), weights.begin(),
-              [&normal, &generator, &std](float x) {
-                  return normal(generator) * std;
-              });
+              [&normal, &generator](float x) { return normal(generator); });
 }
 
 void reinitializeGradients(Gradients& gradients) {
@@ -450,14 +449,21 @@ int main() {
         cout << "Epoch: " << i << " Loss: " << epoch_loss << '\n';
     }
 
-    for (int i = 0; i < 10; i++) {
+    auto correct = 0;
+    auto numTestImages = testImages.size() / 784;
+    for (int i = 0; i < numTestImages; i++) {
         auto idx = i * 784;
         auto image = vector<float>(testImages.begin() + idx,
                                    testImages.begin() + idx + 784);
         auto prediction = predict(model, image);
         cout << "Prediction: " << prediction << " Actual: " << testLabels[i]
              << '\n';
+        if (prediction == testLabels[i]) {
+            correct++;
+        }
     }
+    cout << "Accuracy: " << (correct / static_cast<float>(numTestImages)) * 100
+         << "%\n";
 
     return 0;
 }
