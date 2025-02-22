@@ -7,6 +7,7 @@
 #include <ios>
 #include <iostream>
 #include <numeric>
+#include <random>
 #include <ratio>
 #include <stdexcept>
 #include <string>
@@ -320,11 +321,13 @@ void averageGradients(Gradients& gradients, int batchSize) {
 // small random numbers.
 // This is because stochastic gradient descent is sensitive to the initial
 // values of the weights.
-void initializeWeights(vector<float>& weights) {
-    auto fraction = 1.0 / RAND_MAX;
+void initializeWeights(vector<float>& weights, float n) {
+    auto std = sqrt(2.0 / n);
+    std::normal_distribution<float> normal(0, std);
+    std::default_random_engine generator;
     transform(weights.begin(), weights.end(), weights.begin(),
-              [fraction](float x) {
-                  return static_cast<float>(rand()) * fraction - 0.5f;
+              [&normal, &generator, &std](float x) {
+                  return normal(generator) * std;
               });
 }
 
@@ -438,8 +441,8 @@ int main() {
         .dOutput = vector<float>(model.outputLayer.size(), .0f),
     };
 
-    initializeWeights(model.w1);
-    initializeWeights(model.w2);
+    initializeWeights(model.w1, model.inputLayer.size());
+    initializeWeights(model.w2, model.hiddenLayer.size());
 
     for (int i = 0; i < epochs; i++) {
         auto epoch_loss =
