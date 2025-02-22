@@ -39,7 +39,7 @@ void benchmark(string ref, string arg, function<vector<int>(string)> f) {
     cout << ms_double.count() << "ms\n";
 }
 
-vector<int> loadLabels(const string& path) {
+vector<float> loadLabels(const string& path) {
     ifstream labels(path, ios_base::binary);
     if (!labels) {
         throw runtime_error("Could not open file");
@@ -54,9 +54,9 @@ vector<int> loadLabels(const string& path) {
     vector<unsigned char> buffer(rows);
     labels.read(reinterpret_cast<char*>(buffer.data()), rows);
 
-    vector<int> labelValues(rows);
+    vector<float> labelValues(rows);
     for (int i = 0; i < rows; ++i) {
-        labelValues[i] = static_cast<int>(buffer[i]);
+        labelValues[i] = static_cast<float>(buffer[i]);
     }
 
     return labelValues;
@@ -106,7 +106,7 @@ auto loadImages(string path) {
 
 struct Model {
     float learningRate;
-    vector<int> inputLayer;
+    vector<float> inputLayer;
     vector<float> hiddenLayer;
     vector<float> outputLayer;
     vector<float> w1;
@@ -156,7 +156,7 @@ void relu(vector<float>& input) {
               [](float x) { return max(.0f, x); });
 }
 
-float crossEntropyLoss(vector<float>& output, int target) {
+float crossEntropyLoss(vector<float>& output, float target) {
     // The cross entropy loss is a measure of how well the network is
     // performing. It is the difference between the predicted output and the
     // actual output.
@@ -181,7 +181,7 @@ float derivativeRelu(float& input) { return input > 0 ? 1.0f : .0f; }
 // bias. Then we apply the activation function to the result.
 //
 // We do this for each layer of the network.
-float forward(Model& model, int target) {
+float forward(Model& model, float target) {
     // 1. Calculate the dot product of the input layer and the weights, and add
     // the bias.
     // 2. Apply the activation function to the result (ReLU).
@@ -239,7 +239,7 @@ void updateWeights(Model& model, Gradients& gradients) {
     }
 }
 
-void backward(Model& model, int target, Gradients& gradients) {
+void backward(Model& model, float target, Gradients& gradients) {
     // This is the backward pass of the network. It is the process of updating
     // the weights and biases of the network based on the error of the output.
     // It uses backpropagation to calculate the gradients of the weights and
@@ -337,7 +337,7 @@ void reinitializeGradients(Gradients& gradients) {
     fill(gradients.dOutput.begin(), gradients.dOutput.end(), .0f);
 }
 
-float train(Model& model, Gradients& gradients, vector<int>& labels,
+float train(Model& model, Gradients& gradients, vector<float>& labels,
             vector<float>& images, int batchSize, int numBatches) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
@@ -365,7 +365,7 @@ float train(Model& model, Gradients& gradients, vector<int>& labels,
             auto start = idx * 784;
             auto end = start + 784;
             auto input =
-                vector<int>(images.begin() + start, images.begin() + end);
+                vector<float>(images.begin() + start, images.begin() + end);
             model.inputLayer = input;
             totalLoss += forward(model, labels[idx]);
             backward(model, labels[idx], gradients);
@@ -377,7 +377,7 @@ float train(Model& model, Gradients& gradients, vector<int>& labels,
     return totalLoss / (numBatches * batchSize);
 }
 
-int predict(Model& model, vector<int>& image) {
+int predict(Model& model, vector<float>& image) {
     model.inputLayer = image;
     forward(model, 0);
     return std::distance(
@@ -413,7 +413,7 @@ int main() {
     // 3. Output Layer: 10 neurons
     Model model{
         .learningRate = 0.01,
-        .inputLayer = vector<int>(784),
+        .inputLayer = vector<float>(784),
         .hiddenLayer = vector<float>(64),
         .outputLayer = vector<float>(10),
         .w1 = vector<float>(784 * 64),
@@ -449,8 +449,8 @@ int main() {
 
     for (int i = 0; i < 10; i++) {
         auto idx = i * 784;
-        auto image = vector<int>(testImages.begin() + idx,
-                                 testImages.begin() + idx + 784);
+        auto image = vector<float>(testImages.begin() + idx,
+                                   testImages.begin() + idx + 784);
         auto prediction = predict(model, image);
         cout << "Prediction: " << prediction << " Actual: " << testLabels[i]
              << '\n';
