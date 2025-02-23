@@ -15,7 +15,9 @@
 
 using std::vector, std::transform, std::accumulate, std::fill, std::max,
     std::ifstream, std::runtime_error, std::string, std::cout, std::endl,
-    std::ios_base, std::function;
+    std::ios_base, std::function, std::random_device,
+    std::default_random_engine, std::normal_distribution, std::iota,
+    std::shuffle, std::mt19937;
 
 // Hyperparameters for RMSProp
 const float decay_rate = 0.9f;
@@ -144,7 +146,7 @@ void softmax(vector<float>& input) {
     if (input.empty())
         return;
 
-    auto maxVal = *std::max_element(input.begin(), input.end());
+    auto maxVal = *max_element(input.begin(), input.end());
     vector<float> exp_vals(input.size());
     transform(input.begin(), input.end(), exp_vals.begin(),
               [maxVal](float x) { return exp(x - maxVal); });
@@ -225,7 +227,7 @@ void updateWeights(Model& model, Gradients& gradients, Gradients& cache) {
         cache.dW2[i] =
             decay_rate * cache.dW2[i] + (1 - decay_rate) * (grad * grad);
         model.w2[i] -=
-            model.learningRate * grad / (std::sqrt(cache.dW2[i]) + epsilon);
+            model.learningRate * grad / (sqrt(cache.dW2[i]) + epsilon);
     }
 
     // Update b2 parameters
@@ -234,7 +236,7 @@ void updateWeights(Model& model, Gradients& gradients, Gradients& cache) {
         cache.dB2[i] =
             decay_rate * cache.dB2[i] + (1 - decay_rate) * (grad * grad);
         model.b2[i] -=
-            model.learningRate * grad / (std::sqrt(cache.dB2[i]) + epsilon);
+            model.learningRate * grad / (sqrt(cache.dB2[i]) + epsilon);
     }
 
     // Update w1 parameters
@@ -243,7 +245,7 @@ void updateWeights(Model& model, Gradients& gradients, Gradients& cache) {
         cache.dW1[i] =
             decay_rate * cache.dW1[i] + (1 - decay_rate) * (grad * grad);
         model.w1[i] -=
-            model.learningRate * grad / (std::sqrt(cache.dW1[i]) + epsilon);
+            model.learningRate * grad / (sqrt(cache.dW1[i]) + epsilon);
     }
 
     // Update b1 parameters
@@ -252,7 +254,7 @@ void updateWeights(Model& model, Gradients& gradients, Gradients& cache) {
         cache.dB1[i] =
             decay_rate * cache.dB1[i] + (1 - decay_rate) * (grad * grad);
         model.b1[i] -=
-            model.learningRate * grad / (std::sqrt(cache.dB1[i]) + epsilon);
+            model.learningRate * grad / (sqrt(cache.dB1[i]) + epsilon);
     }
 }
 
@@ -339,9 +341,9 @@ void averageGradients(Gradients& gradients, int batchSize) {
 // values of the weights.
 void initializeWeights(vector<float>& weights, float n) {
     float stddev = sqrt(2.0 / n);
-    std::normal_distribution<float> normal(0, stddev);
-    std::random_device rd;
-    std::default_random_engine generator(rd());
+    normal_distribution<float> normal(0, stddev);
+    random_device rd;
+    default_random_engine generator(rd());
     transform(weights.begin(), weights.end(), weights.begin(),
               [&normal, &generator](float x) { return normal(generator); });
 }
@@ -376,11 +378,18 @@ float train(Model& model, Gradients& gradients, Gradients& cacheGradients,
     // 2. Use a worker pool to avoid the overhead of spinning up threads.
     //
     // But start with the simplest implementation first, and then optimize.
+    //
+
+    vector<int> indices(images.size() / 784);
+    iota(indices.begin(), indices.end(), 0);
+    random_device rd;
+    mt19937 gen(rd());
+    shuffle(indices.begin(), indices.end(), gen);
 
     auto totalLoss = .0f;
     for (int i = 0; i < numBatches; i++) {
         for (int j = 0; j < batchSize; j++) {
-            auto idx = i * batchSize + j;
+            auto idx = indices[i * batchSize + j];
             auto start = idx * 784;
             auto end = start + 784;
             auto input =
@@ -399,9 +408,9 @@ float train(Model& model, Gradients& gradients, Gradients& cacheGradients,
 int predict(Model& model, vector<float>& image) {
     model.inputLayer = image;
     forward(model, 0);
-    return std::distance(
+    return distance(
         model.outputLayer.begin(),
-        std::max_element(model.outputLayer.begin(), model.outputLayer.end()));
+        max_element(model.outputLayer.begin(), model.outputLayer.end()));
 }
 
 int main() {
@@ -427,17 +436,17 @@ int main() {
     // need two layers which are fully connected.
 
     // -- Model Architecture --
-    // 1. Input Layer:  784 neurons,    weights: 784 x 64,  biases: 64
-    // 2. Hidden Layer: 64 neurons,     weights: 64 x 10,   biases: 10
+    // 1. Input Layer:  784 neurons,        weights: 784 x 64,      biases: 64
+    // 2. Hidden Layer: 512 neurons,        weights: 512 x 10,      biases: 10
     // 3. Output Layer: 10 neurons
     Model model{
         .learningRate = 0.001,
         .inputLayer = vector<float>(784),
-        .hiddenLayer = vector<float>(64),
+        .hiddenLayer = vector<float>(512),
         .outputLayer = vector<float>(10),
-        .w1 = vector<float>(784 * 64),
-        .b1 = vector<float>(64),
-        .w2 = vector<float>(64 * 10),
+        .w1 = vector<float>(784 * 512),
+        .b1 = vector<float>(512),
+        .w2 = vector<float>(512 * 10),
         .b2 = vector<float>(10),
     };
 
@@ -446,7 +455,7 @@ int main() {
     // Multiply by 784 to get the number of pixels in the image.
     auto averageRate = 1.0 / (batchSize * 784);
     auto numBatches = images.size() * averageRate;
-    auto epochs = 10;
+    auto epochs = 5;
 
     auto gradients = Gradients{
         .dW1 = vector<float>(model.w1.size(), .0f),
@@ -469,7 +478,7 @@ int main() {
     initializeWeights(model.w1, model.inputLayer.size());
     initializeWeights(model.w2, model.hiddenLayer.size());
 
-    for (int i = 0; i < epochs; i++) {
+    for (int i = 0; i <= epochs; i++) {
         auto epoch_loss = train(model, gradients, cacheGradients, labels,
                                 images, batchSize, numBatches);
         cout << "Epoch: " << i << " Loss: " << epoch_loss << '\n';
