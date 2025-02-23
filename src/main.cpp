@@ -21,7 +21,7 @@ using std::vector, std::transform, std::accumulate, std::fill, std::max,
 
 // Hyperparameters for RMSProp
 // Will refactor these later but for now we can keep them here.
-// Want to easily try to change things as we go, currently at 88.76% accuracy
+// Want to easily try to change things as we go, currently at 89.07% accuracy
 // but going for above 97%
 const float decay_rate = 0.9f;
 const float epsilon = 1e-8f;
