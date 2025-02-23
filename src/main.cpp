@@ -480,6 +480,8 @@ int main() {
 
     initializeWeights(model.w1, model.inputLayer.size());
     initializeWeights(model.w2, model.hiddenLayer.size());
+    initializeWeights(model.b1, model.hiddenLayer.size());
+    initializeWeights(model.b2, model.outputLayer.size());
 
     for (int i = 0; i <= epochs; i++) {
         auto epoch_loss = train(model, gradients, cacheGradients, labels,
