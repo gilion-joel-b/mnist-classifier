@@ -17,6 +17,10 @@ using std::vector, std::transform, std::accumulate, std::fill, std::max,
     std::ifstream, std::runtime_error, std::string, std::cout, std::endl,
     std::ios_base, std::function;
 
+// Hyperparameters for RMSProp
+const float decay_rate = 0.9f;
+const float epsilon = 1e-8f;
+
 void benchmark(string ref, string arg, function<vector<int>(string)> f) {
     using std::milli, std::chrono::duration, std::chrono::duration_cast,
         std::chrono::high_resolution_clock, std::chrono::milliseconds;
@@ -215,28 +219,40 @@ float forward(Model& model, float target) {
     return crossEntropyLoss(model.outputLayer, target);
 }
 
-void updateWeights(Model& model, Gradients& gradients) {
-    for (int i = 0; i < model.outputLayer.size(); i++) {
-        for (int j = 0; j < model.hiddenLayer.size(); j++) {
-            model.w2[i * model.hiddenLayer.size() + j] -= model.learningRate *
-                                                          gradients.dOutput[i] *
-                                                          model.hiddenLayer[j];
-        }
+void updateWeights(Model& model, Gradients& gradients, Gradients& cache) {
+    for (size_t i = 0; i < model.w2.size(); i++) {
+        float grad = gradients.dW2[i];
+        cache.dW2[i] =
+            decay_rate * cache.dW2[i] + (1 - decay_rate) * (grad * grad);
+        model.w2[i] -=
+            model.learningRate * grad / (std::sqrt(cache.dW2[i]) + epsilon);
     }
 
-    for (int i = 0; i < model.b2.size(); i++) {
-        model.b2[i] -= model.learningRate * gradients.dOutput[i];
+    // Update b2 parameters
+    for (size_t i = 0; i < model.b2.size(); i++) {
+        float grad = gradients.dB2[i];
+        cache.dB2[i] =
+            decay_rate * cache.dB2[i] + (1 - decay_rate) * (grad * grad);
+        model.b2[i] -=
+            model.learningRate * grad / (std::sqrt(cache.dB2[i]) + epsilon);
     }
 
-    for (int i = 0; i < model.hiddenLayer.size(); i++) {
-        for (int j = 0; j < model.inputLayer.size(); j++) {
-            model.w1[i * model.inputLayer.size() + j] -=
-                model.learningRate * gradients.dHidden[i] * model.inputLayer[j];
-        }
+    // Update w1 parameters
+    for (size_t i = 0; i < model.w1.size(); i++) {
+        float grad = gradients.dW1[i];
+        cache.dW1[i] =
+            decay_rate * cache.dW1[i] + (1 - decay_rate) * (grad * grad);
+        model.w1[i] -=
+            model.learningRate * grad / (std::sqrt(cache.dW1[i]) + epsilon);
     }
 
-    for (int i = 0; i < model.b1.size(); i++) {
-        model.b1[i] -= model.learningRate * gradients.dHidden[i];
+    // Update b1 parameters
+    for (size_t i = 0; i < model.b1.size(); i++) {
+        float grad = gradients.dB1[i];
+        cache.dB1[i] =
+            decay_rate * cache.dB1[i] + (1 - decay_rate) * (grad * grad);
+        model.b1[i] -=
+            model.learningRate * grad / (std::sqrt(cache.dB1[i]) + epsilon);
     }
 }
 
@@ -339,8 +355,9 @@ void reinitializeGradients(Gradients& gradients) {
     fill(gradients.dOutput.begin(), gradients.dOutput.end(), .0f);
 }
 
-float train(Model& model, Gradients& gradients, vector<float>& labels,
-            vector<float>& images, int batchSize, int numBatches) {
+float train(Model& model, Gradients& gradients, Gradients& cacheGradients,
+            vector<float>& labels, vector<float>& images, int batchSize,
+            int numBatches) {
     // -- Stochastic Gradient Descent --
     // We will use batches in power of 2, this is because it is more efficient
     // to use powers of 2 when working with SIMD instructions.
@@ -373,7 +390,7 @@ float train(Model& model, Gradients& gradients, vector<float>& labels,
             backward(model, labels[idx], gradients);
         }
         averageGradients(gradients, batchSize);
-        updateWeights(model, gradients);
+        updateWeights(model, gradients, cacheGradients);
         reinitializeGradients(gradients);
     }
     return totalLoss / (numBatches * batchSize);
@@ -414,7 +431,7 @@ int main() {
     // 2. Hidden Layer: 64 neurons,     weights: 64 x 10,   biases: 10
     // 3. Output Layer: 10 neurons
     Model model{
-        .learningRate = 0.01,
+        .learningRate = 0.001,
         .inputLayer = vector<float>(784),
         .hiddenLayer = vector<float>(64),
         .outputLayer = vector<float>(10),
@@ -440,12 +457,21 @@ int main() {
         .dOutput = vector<float>(model.outputLayer.size(), .0f),
     };
 
+    auto cacheGradients = Gradients{
+        .dW1 = vector<float>(model.w1.size(), .0f),
+        .dB1 = vector<float>(model.b1.size(), .0f),
+        .dW2 = vector<float>(model.w2.size(), .0f),
+        .dB2 = vector<float>(model.b2.size(), .0f),
+        .dHidden = vector<float>(model.hiddenLayer.size(), .0f),
+        .dOutput = vector<float>(model.outputLayer.size(), .0f),
+    };
+
     initializeWeights(model.w1, model.inputLayer.size());
     initializeWeights(model.w2, model.hiddenLayer.size());
 
     for (int i = 0; i < epochs; i++) {
-        auto epoch_loss =
-            train(model, gradients, labels, images, batchSize, numBatches);
+        auto epoch_loss = train(model, gradients, cacheGradients, labels,
+                                images, batchSize, numBatches);
         cout << "Epoch: " << i << " Loss: " << epoch_loss << '\n';
     }
 
