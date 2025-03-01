@@ -462,7 +462,7 @@ int main() {
     // Multiply by 784 to get the number of pixels in the image.
     auto averageRate = 1.0 / (batchSize * 784);
     auto numBatches = images.size() * averageRate;
-    auto epochs = 5;
+    auto epochs = 15;
 
     auto gradients = Gradients{
         .dW1 = vector<float>(model.w1.size(), .0f),
@@ -500,8 +500,8 @@ int main() {
         auto image = vector<float>(testImages.begin() + idx,
                                    testImages.begin() + idx + 784);
         auto prediction = predict(model, image);
-        cout << "Prediction: " << prediction << " Actual: " << testLabels[i]
-             << '\n';
+        // cout << "Prediction: " << prediction << " Actual: " << testLabels[i]
+        //      << '\n';
         if (prediction == testLabels[i]) {
             correct++;
         }
