@@ -39,4 +39,5 @@ In this case since we only use `std::vectors` with predetermined size and contin
 
 ## Benchmarks
 Training time: 282661 ms (282.661 s)
+
 Accuracy: 91-92%
