@@ -394,8 +394,8 @@ float train(Model& model, Gradients& gradients, Gradients& cacheGradients,
     shuffle(indices.begin(), indices.end(), gen);
 
     auto totalLoss = .0f;
-    for (size_t i = 0; i < numBatches; i++) {
-        for (size_t j = 0; j < batchSize; j++) {
+    for (int i = 0; i < numBatches; i++) {
+        for (int j = 0; j < batchSize; j++) {
             auto idx = indices[i * batchSize + j];
             auto start = idx * 784;
             auto end = start + 784;
@@ -495,7 +495,7 @@ int main() {
 
     auto correct = 0;
     auto numTestImages = testImages.size() / 784;
-    for (int i = 0; i < numTestImages; i++) {
+    for (size_t i = 0; i < numTestImages; i++) {
         auto idx = i * 784;
         auto image = vector<float>(testImages.begin() + idx,
                                    testImages.begin() + idx + 784);
