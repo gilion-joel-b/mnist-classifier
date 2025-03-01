@@ -35,3 +35,8 @@ In this case since we only use `std::vectors` with predetermined size and contin
 ### Optimisations to add:
 - SIMD vectorisation
 - Parallel computation
+
+
+## Benchmarks
+Training time: 282661 ms (282.661 s)
+Accuracy: 91-92%

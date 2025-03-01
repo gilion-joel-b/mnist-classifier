@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstddef>
 #include <fstream>
-#include <functional>
 #include <ios>
 #include <iostream>
 #include <numeric>
@@ -15,10 +14,9 @@
 #include <vector>
 
 using std::vector, std::transform, std::accumulate, std::fill, std::max,
-    std::ifstream, std::runtime_error, std::string, std::cout, std::endl,
-    std::ios_base, std::function, std::random_device,
-    std::default_random_engine, std::normal_distribution, std::iota,
-    std::shuffle, std::mt19937;
+    std::ifstream, std::runtime_error, std::string, std::cout, std::ios_base,
+    std::random_device, std::default_random_engine, std::normal_distribution,
+    std::iota, std::shuffle, std::mt19937;
 
 // Hyperparameters for RMSProp
 // Will refactor these later but for now we can keep them here.
@@ -27,17 +25,16 @@ using std::vector, std::transform, std::accumulate, std::fill, std::max,
 const float decay_rate = 0.9f;
 const float epsilon = 1e-8f;
 
-void benchmark(string ref, string arg, function<vector<int>(string)> f) {
+auto benchmark_start() {
     using std::milli, std::chrono::duration, std::chrono::duration_cast,
         std::chrono::high_resolution_clock, std::chrono::milliseconds;
 
-    cout << "Benchmarking " << ref << endl;
+    return high_resolution_clock::now();
+}
 
-    auto t1 = high_resolution_clock::now();
-
-    for (int i = 0; i < 100; i++) {
-        auto labels = f(arg);
-    }
+auto benchmark_end(std::chrono::time_point<std::chrono::steady_clock> t1) {
+    using std::milli, std::chrono::duration, std::chrono::duration_cast,
+        std::chrono::high_resolution_clock, std::chrono::milliseconds;
 
     auto t2 = high_resolution_clock::now();
     // Getting number of milliseconds as an integer.
@@ -487,11 +484,13 @@ int main() {
     initializeWeights(model.b1, model.hiddenLayer.size());
     initializeWeights(model.b2, model.outputLayer.size());
 
+    auto t1 = benchmark_start();
     for (int i = 0; i <= epochs; i++) {
         auto epoch_loss = train(model, gradients, cacheGradients, labels,
                                 images, batchSize, numBatches);
         cout << "Epoch: " << i << " Loss: " << epoch_loss << '\n';
     }
+    benchmark_end(t1);
 
     auto correct = 0;
     auto numTestImages = testImages.size() / 784;
