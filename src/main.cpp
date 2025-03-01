@@ -23,7 +23,7 @@ using std::vector, std::transform, std::accumulate, std::fill, std::max,
 // Want to easily try to change things as we go, currently at 89.07% accuracy
 // but going for above 97%
 const float decay_rate = 0.9f;
-const float epsilon = 1e-8f;
+const float epsilon = 1e-7f;
 
 auto benchmark_start() {
     using std::milli, std::chrono::duration, std::chrono::duration_cast,
