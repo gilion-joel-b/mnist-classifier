@@ -2,6 +2,7 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
 #include <functional>
 #include <ios>
@@ -199,9 +200,9 @@ float forward(Model& model, float target) {
     // the bias
     // 4. Apply the activation function to the result (Softmax).
 
-    for (int i = 0; i < model.hiddenLayer.size(); i++) {
+    for (size_t i = 0; i < model.hiddenLayer.size(); i++) {
         float sum = 0;
-        for (int j = 0; j < model.inputLayer.size(); j++) {
+        for (size_t j = 0; j < model.inputLayer.size(); j++) {
             sum +=
                 model.inputLayer[j] * model.w1[j + i * model.inputLayer.size()];
         }
@@ -210,9 +211,9 @@ float forward(Model& model, float target) {
 
     relu(model.hiddenLayer);
 
-    for (int i = 0; i < model.outputLayer.size(); i++) {
+    for (size_t i = 0; i < model.outputLayer.size(); i++) {
         float sum = 0;
-        for (int j = 0; j < model.hiddenLayer.size(); j++) {
+        for (size_t j = 0; j < model.hiddenLayer.size(); j++) {
             sum += model.hiddenLayer[j] *
                    model.w2[j + i * model.hiddenLayer.size()];
         }
@@ -277,21 +278,21 @@ void backward(Model& model, float target, Gradients& gradients) {
     // dC/dA = dC/dZ * dZ/dA
 
     // This is the partial derivative of the cost w.r.t the weights
-    for (int i = 0; i < model.outputLayer.size(); i++) {
+    for (size_t i = 0; i < model.outputLayer.size(); i++) {
         // Because we are using the softmax function, the derivative of the
         // output layer is simply the output layer itself minus 1 for the target
         // class.
         gradients.dOutput[i] +=
             (i == target) ? model.outputLayer[i] - 1 : model.outputLayer[i];
 
-        for (int j = 0; j < model.hiddenLayer.size(); j++) {
+        for (size_t j = 0; j < model.hiddenLayer.size(); j++) {
             gradients.dW2[i * model.hiddenLayer.size() + j] +=
                 gradients.dOutput[i] * model.hiddenLayer[j];
         }
     }
 
     // This is the partial derivative of the cost w.r.t the biases
-    for (int i = 0; i < model.b2.size(); i++) {
+    for (size_t i = 0; i < model.b2.size(); i++) {
         gradients.dB2[i] += gradients.dOutput[i];
     }
 
@@ -299,23 +300,23 @@ void backward(Model& model, float target, Gradients& gradients) {
     // For backpropagation to work we need to align the shape of the weights
     // with the shape of the gradient. This is why we need to transpose the
     // weights.
-    for (int i = 0; i < model.hiddenLayer.size(); i++) {
+    for (size_t i = 0; i < model.hiddenLayer.size(); i++) {
         auto sum = 0.0f;
-        for (int j = 0; j < model.outputLayer.size(); j++) {
+        for (size_t j = 0; j < model.outputLayer.size(); j++) {
             sum += gradients.dOutput[j] *
                    model.w2[j * model.hiddenLayer.size() + i];
         }
         gradients.dHidden[i] += sum * derivativeRelu(model.hiddenLayer[i]);
     }
 
-    for (int i = 0; i < model.hiddenLayer.size(); i++) {
-        for (int j = 0; j < model.inputLayer.size(); j++) {
+    for (size_t i = 0; i < model.hiddenLayer.size(); i++) {
+        for (size_t j = 0; j < model.inputLayer.size(); j++) {
             gradients.dW1[i * model.inputLayer.size() + j] +=
                 gradients.dHidden[i] * model.inputLayer[j];
         }
     }
 
-    for (int i = 0; i < model.b1.size(); i++) {
+    for (size_t i = 0; i < model.b1.size(); i++) {
         gradients.dB1[i] += gradients.dHidden[i];
     }
 }
@@ -348,7 +349,10 @@ void initializeWeights(vector<float>& weights, float n) {
     random_device rd;
     default_random_engine generator(rd());
     transform(weights.begin(), weights.end(), weights.begin(),
-              [&normal, &generator](float x) { return normal(generator); });
+              [&normal, &generator](auto var) {
+                  (void)var;
+                  return normal(generator);
+              });
 }
 
 void reinitializeGradients(Gradients& gradients) {
@@ -390,8 +394,8 @@ float train(Model& model, Gradients& gradients, Gradients& cacheGradients,
     shuffle(indices.begin(), indices.end(), gen);
 
     auto totalLoss = .0f;
-    for (int i = 0; i < numBatches; i++) {
-        for (int j = 0; j < batchSize; j++) {
+    for (size_t i = 0; i < numBatches; i++) {
+        for (size_t j = 0; j < batchSize; j++) {
             auto idx = indices[i * batchSize + j];
             auto start = idx * 784;
             auto end = start + 784;
