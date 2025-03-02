@@ -23,6 +23,8 @@ I am currently unable to reproduce these results.
 
 My current thought process must be that there is some hyper parameter difference which I am unaware of.
 
+Using true gradient descent, meaning that the batch size is reduced to 1, improves performance. This puts the model at industry standard ~97%.
+
 ## Optimizations
 
 There are several C++ optimizations that can be done to increase speed, tremendously, but which are have not been done. This is because I wished to first find a working architecture, and then optimize the code. 
@@ -40,4 +42,5 @@ In this case since we only use `std::vectors` with predetermined size and contin
 ## Benchmarks
 Training time: 282661 ms (282.661 s)
 
-Accuracy: 91-92%
+Accuracy (32 batch): 91-92%
+Accuracy (Gradient Descent): 97.7%
